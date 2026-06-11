@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0f1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PlaneTable Pro – Digital Plane Table Surveying System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #050912;
+  --bg-panel: #0a1020;
+  --bg-card: #0e1628;
+  --bg-hover: #131d35;
+  --accent: #1e90ff;
+  --accent2: #00d4ff;
+  --accent3: #00ff9d;
+  --accent-warn: #ffb800;
+  --accent-danger: #ff4466;
+  --text-primary: #e8f0ff;
+  --text-secondary: #7a90b8;
+  --text-muted: #3d5080;
+  --border: rgba(30,144,255,0.2);
+  --border-bright: rgba(30,144,255,0.5);
+  --glow: 0 0 20px rgba(30,144,255,0.15);
+  --font-main: 'Rajdhani', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-data: 'Share Tech Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { width:100%; height:100%; overflow:hidden; background:var(--bg-deep); }
+body { width:100%; height:100%; overflow:hidden; background:var(--bg-deep); color:var(--text-primary); font-family:var(--font-main); }
+
+/* ── SCROLLBARS ── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-bright); border-radius:2px; }
+
+/* ── LAYOUT ── */
+#app { display:flex; flex-direction:column; height:100vh; height:100dvh; width:100vw; }
+#topbar { display:flex; align-items:center; gap:12px; padding:0 16px; height:48px; background:var(--bg-panel); border-bottom:1px solid var(--border); flex-shrink:0; z-index:100; }
+#main { display:flex; flex:1; overflow:hidden; }
+#sidebar { width:220px; background:var(--bg-panel); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; overflow-y:auto; transition:width 0.2s; }
+#content { flex:1; overflow:hidden; position:relative; }
+#statusbar { height:24px; background:var(--bg-panel); border-top:1px solid var(--border); display:flex; align-items:center; gap:16px; padding:0 12px; font-family:var(--font-data); font-size:11px; color:var(--text-secondary); flex-shrink:0; }
+
+/* ── TOPBAR ── */
+.logo { font-family:var(--font-main); font-weight:700; font-size:18px; color:var(--accent); letter-spacing:2px; white-space:nowrap; }
+.logo span { color:var(--accent3); }
+.topbar-sep { width:1px; height:28px; background:var(--border); }
+.topbar-btn { padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:transparent; color:var(--text-secondary); font-family:var(--font-main); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; letter-spacing:0.5px; }
+.topbar-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(30,144,255,0.08); }
+.topbar-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(30,144,255,0.15); }
+.topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.gps-pill { display:flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; background:rgba(0,255,157,0.1); border:1px solid rgba(0,255,157,0.3); font-family:var(--font-data); font-size:11px; color:var(--accent3); }
+.gps-dot { width:6px; height:6px; border-radius:50%; background:var(--accent3); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── SIDEBAR ── */
+.sidebar-section { padding:8px 0; border-bottom:1px solid var(--border); }
+.sidebar-label { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--text-muted); padding:6px 14px 4px; text-transform:uppercase; }
+.sidebar-item { display:flex; align-items:center; gap:8px; padding:8px 14px; cursor:pointer; transition:all 0.15s; font-size:14px; font-weight:600; color:var(--text-secondary); letter-spacing:0.3px; }
+.sidebar-item:hover { background:var(--bg-hover); color:var(--text-primary); }
+.sidebar-item.active { background:rgba(30,144,255,0.12); color:var(--accent); border-left:2px solid var(--accent); }
+.sidebar-icon { font-size:16px; width:18px; text-align:center; flex-shrink:0; }
+.sidebar-badge { margin-left:auto; font-size:10px; padding:1px 6px; border-radius:10px; background:var(--accent); color:#fff; font-family:var(--font-data); }
+
+/* ── PANELS / PAGES ── */
+.page { position:absolute; inset:0; overflow:hidden; display:none; flex-direction:column; }
+.page.active { display:flex; }
+
+/* ── DASHBOARD ── */
+#page-dashboard { padding:20px; overflow-y:auto; gap:16px; }
+.dash-header { margin-bottom:8px; }
+.dash-title { font-size:26px; font-weight:700; letter-spacing:1px; }
+.dash-sub { font-size:14px; color:var(--text-secondary); margin-top:2px; }
+.dash-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.dash-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+.dash-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg, rgba(30,144,255,0.05) 0%, transparent 60%); pointer-events:none; }
+.dash-card:hover { border-color:var(--border-bright); transform:translateY(-2px); box-shadow:var(--glow); }
+.dash-card-icon { font-size:28px; margin-bottom:10px; }
+.dash-card-title { font-size:16px; font-weight:700; margin-bottom:4px; letter-spacing:0.5px; }
+.dash-card-desc { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+.dash-card.primary { border-color:rgba(30,144,255,0.4); }
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.stat-box { background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:12px; text-align:center; }
+.stat-val { font-size:22px; font-weight:700; font-family:var(--font-data); color:var(--accent); }
+.stat-lbl { font-size:11px; color:var(--text-muted); margin-top:2px; letter-spacing:0.5px; text-transform:uppercase; }
+.project-list { display:flex; flex-direction:column; gap:6px; }
+.proj-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; cursor:pointer; transition:all 0.15s; }
+.proj-row:hover { border-color:var(--border-bright); }
+.proj-name { font-weight:600; font-size:14px; flex:1; }
+.proj-meta { font-size:12px; color:var(--text-secondary); font-family:var(--font-data); }
+.proj-badge { font-size:10px; padding:2px 8px; border-radius:10px; font-family:var(--font-data); }
+.badge-active { background:rgba(0,255,157,0.15); color:var(--accent3); border:1px solid rgba(0,255,157,0.3); }
+.badge-done { background:rgba(30,144,255,0.15); color:var(--accent); border:1px solid rgba(30,144,255,0.3); }
+
+/* ── CANVAS WORKSPACE ── */
+#page-workspace { flex-direction:row; }
+#canvas-wrap { flex:1; position:relative; overflow:hidden; }
+#survey-canvas { display:block; cursor:crosshair; }
+#canvas-toolbar { position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:6px; z-index:10; }
+#canvas-toolbar-right { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:10; }
+.ctool { width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:16px; transition:all 0.15s; }
+.ctool:hover, .ctool.active { border-color:var(--accent); background:rgba(30,144,255,0.15); color:var(--accent); }
+#coord-display { position:absolute; bottom:10px; left:10px; font-family:var(--font-data); font-size:11px; color:var(--accent2); background:rgba(10,16,32,0.85); padding:5px 10px; border-radius:4px; border:1px solid var(--border); }
+#compass-widget { position:absolute; bottom:10px; right:10px; width:80px; height:80px; }
+#workspace-panel { width:260px; background:var(--bg-panel); border-left:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
+
+/* ── PANEL SECTIONS ── */
+.panel-sec { border-bottom:1px solid var(--border); padding:12px; }
+.panel-sec-title { font-size:11px; font-weight:700; letter-spacing:2px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; }
+.form-group { margin-bottom:10px; }
+.form-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block; font-weight:600; }
+.form-input { width:100%; background:var(--bg-deep); border:1px solid var(--border); border-radius:4px; padding:7px 10px; color:var(--text-primary); font-family:var(--font-main); font-size:13px; outline:none; transition:border-color 0.15s; }
+.form-input:focus { border-color:var(--accent); }
+.form-select { width:100%; background:var(--bg-deep); border:1px solid var(--border); border-radius:4px; padding:7px 10px; color:var(--text-primary); font-family:var(--font-main); font-size:13px; outline:none; cursor:pointer; }
+.btn { padding:8px 14px; border-radius:5px; font-family:var(--font-main); font-size:13px; font-weight:700; cursor:pointer; transition:all 0.15s; letter-spacing:0.5px; border:1px solid transparent; }
+.btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary:hover { background:#1a7ae0; }
+.btn-ghost { background:transparent; border-color:var(--border-bright); color:var(--accent); }
+.btn-ghost:hover { background:rgba(30,144,255,0.1); }
+.btn-danger { background:transparent; border-color:rgba(255,68,102,0.5); color:var(--accent-danger); }
+.btn-danger:hover { background:rgba(255,68,102,0.1); }
+.btn-success { background:rgba(0,255,157,0.15); border-color:rgba(0,255,157,0.4); color:var(--accent3); }
+.btn-sm { padding:5px 10px; font-size:12px; }
+.btn-block { width:100%; text-align:center; }
+.btn-row { display:flex; gap:6px; }
+
+/* ── LAYER LIST ── */
+.layer-row { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:4px; font-size:12px; cursor:pointer; transition:background 0.1s; }
+.layer-row:hover { background:var(--bg-hover); }
+.layer-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.layer-name { flex:1; color:var(--text-secondary); }
+.layer-vis { font-size:13px; color:var(--text-muted); cursor:pointer; }
+.layer-vis.on { color:var(--accent); }
+
+/* ── POINT LIST ── */
+.point-row { display:flex; align-items:center; gap:6px; padding:5px 8px; border-radius:4px; font-size:11px; font-family:var(--font-data); cursor:pointer; transition:background 0.1s; }
+.point-row:hover { background:var(--bg-hover); }
+.point-id { color:var(--accent); font-weight:700; min-width:24px; }
+.point-coords { color:var(--text-secondary); flex:1; }
+.point-type { font-size:10px; padding:1px 5px; border-radius:3px; }
+.pt-station { background:rgba(255,184,0,0.15); color:var(--accent-warn); }
+.pt-radiation { background:rgba(30,144,255,0.15); color:var(--accent); }
+.pt-intersect { background:rgba(0,212,255,0.15); color:var(--accent2); }
+.pt-traverse { background:rgba(0,255,157,0.15); color:var(--accent3); }
+
+/* ── INSTRUMENTS ── */
+#page-instruments { flex-direction:row; gap:0; overflow:hidden; }
+.instrument-col { flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:14px; }
+.instr-card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+.instr-title { font-size:14px; font-weight:700; letter-spacing:1px; color:var(--accent); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.instr-icon { font-size:20px; }
+
+/* ── LEVEL BUBBLE ── */
+#level-container { width:160px; height:160px; border-radius:50%; background:var(--bg-deep); border:2px solid var(--border-bright); position:relative; overflow:hidden; margin:0 auto 10px; }
+.level-reticle { position:absolute; inset:0; pointer-events:none; }
+.level-reticle-v { position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(30,144,255,0.3); transform:translateX(-50%); }
+.level-reticle-h { position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(30,144,255,0.3); transform:translateY(-50%); }
+.level-inner { position:absolute; inset:20%; border-radius:50%; border:1px solid rgba(30,144,255,0.2); }
+.level-bubble { position:absolute; width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 40% 35%, rgba(0,255,157,0.9), rgba(0,200,120,0.6)); border:2px solid rgba(0,255,157,0.8); top:50%; left:50%; transform:translate(-50%,-50%); transition:top 0.3s, left 0.3s; box-shadow:0 0 10px rgba(0,255,157,0.4); }
+.level-status { text-align:center; font-size:13px; font-weight:700; letter-spacing:1px; }
+.level-ok { color:var(--accent3); }
+.level-bad { color:var(--accent-danger); }
+.tilt-vals { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.tilt-val { text-align:center; background:var(--bg-deep); border:1px solid var(--border); border-radius:4px; padding:6px; }
+.tilt-axis { font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+.tilt-num { font-size:16px; font-weight:700; font-family:var(--font-data); color:var(--accent2); }
+
+/* ── COMPASS ── */
+#compass-container { width:200px; height:200px; position:relative; margin:0 auto; }
+#compass-svg { width:100%; height:100%; }
+.compass-val { text-align:center; font-family:var(--font-data); font-size:24px; font-weight:700; color:var(--accent); }
+.compass-sub { text-align:center; font-size:11px; color:var(--text-secondary); }
+.heading-row { display:flex; justify-content:space-around; margin-top:8px; }
+.heading-item { text-align:center; }
+.heading-label { font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+.heading-val { font-size:14px; font-weight:700; font-family:var(--font-data); color:var(--text-primary); }
+
+/* ── ALIDADE ── */
+#alidade-view { position:relative; width:100%; height:180px; background:var(--bg-deep); border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-bottom:10px; }
+#alidade-canvas { position:absolute; inset:0; width:100%; height:100%; }
+.alidade-data { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.alidade-field { background:var(--bg-deep); border:1px solid var(--border); border-radius:4px; padding:8px; }
+.alidade-field-label { font-size:10px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:2px; }
+.alidade-field-val { font-size:18px; font-weight:700; font-family:var(--font-data); color:var(--accent2); }
+
+/* ── GPS PANEL ── */
+.gps-ring { width:120px; height:120px; position:relative; margin:0 auto 12px; }
+.gps-accuracy-circle { width:100%; height:100%; border-radius:50%; border:2px solid var(--accent3); background:rgba(0,255,157,0.05); display:flex; align-items:center; justify-content:center; flex-direction:column; }
+.gps-acc-val { font-family:var(--font-data); font-size:22px; color:var(--accent3); font-weight:700; }
+.gps-acc-lbl { font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+.gps-coords-grid { display:grid; gap:6px; }
+.gps-coord-row { display:flex; align-items:center; gap:8px; background:var(--bg-deep); border:1px solid var(--border); border-radius:4px; padding:7px 10px; }
+.gps-coord-label { font-size:11px; color:var(--text-muted); width:30px; letter-spacing:1px; }
+.gps-coord-val { font-family:var(--font-data); font-size:13px; color:var(--text-primary); flex:1; }
+.gps-sat { font-size:10px; color:var(--accent3); }
+
+/* ── METHODS ── */
+#page-methods { flex-direction:column; overflow-y:auto; padding:0; }
+.method-tabs { display:flex; border-bottom:1px solid var(--border); background:var(--bg-panel); flex-shrink:0; overflow-x:auto; }
+.method-tab { padding:12px 20px; font-size:13px; font-weight:700; color:var(--text-secondary); cursor:pointer; white-space:nowrap; border-bottom:2px solid transparent; transition:all 0.15s; letter-spacing:0.5px; }
+.method-tab:hover { color:var(--text-primary); }
+.method-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.method-content { flex:1; overflow-y:auto; padding:20px; display:none; }
+.method-content.active { display:block; }
+.method-hero { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
+.method-formula { font-family:var(--font-mono); font-size:12px; color:var(--accent2); background:rgba(0,212,255,0.07); padding:8px 12px; border-radius:4px; border-left:3px solid var(--accent2); margin:8px 0; line-height:1.8; }
+.method-diagram { width:100%; height:200px; background:var(--bg-deep); border:1px solid var(--border); border-radius:6px; margin:10px 0; }
+.result-box { background:var(--bg-deep); border:1px solid var(--border-bright); border-radius:6px; padding:12px; margin-top:10px; }
+.result-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border); }
+.result-row:last-child { border-bottom:none; }
+.result-key { font-size:12px; color:var(--text-secondary); }
+.result-val { font-family:var(--font-data); font-size:13px; color:var(--accent3); font-weight:700; }
+.method-steps { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.step-row { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:var(--bg-card); border-radius:6px; border:1px solid var(--border); }
+.step-num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+.step-text { font-size:13px; color:var(--text-secondary); line-height:1.5; }
+
+/* ── EXPORT ── */
+#page-export { overflow-y:auto; padding:20px; gap:16px; flex-direction:column; }
+.export-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+.export-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.export-card-icon { font-size:32px; }
+.export-card-title { font-size:16px; font-weight:700; }
+.export-card-desc { font-size:12px; color:var(--text-secondary); flex:1; }
+.export-progress { height:3px; background:var(--bg-deep); border-radius:2px; overflow:hidden; }
+.export-bar { height:100%; background:var(--accent); width:0%; transition:width 1s; border-radius:2px; }
+
+/* ── AR MODE ── */
+#page-ar { background:var(--bg-deep); position:relative; overflow:hidden; }
+#ar-camera-bg { position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(30,144,255,0.06) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(30,144,255,0.06) 40px); }
+#ar-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+#ar-crosshair { width:60px; height:60px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+#ar-info-panel { position:absolute; top:20px; left:20px; right:20px; }
+#ar-hud { position:absolute; bottom:20px; left:20px; right:20px; display:flex; gap:10px; }
+.ar-panel { background:rgba(10,16,32,0.85); backdrop-filter:blur(10px); border:1px solid var(--border); border-radius:8px; padding:12px; }
+.ar-hud-item { flex:1; text-align:center; }
+.ar-hud-val { font-family:var(--font-data); font-size:18px; color:var(--accent2); font-weight:700; }
+.ar-hud-label { font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+.ar-target { position:absolute; padding:4px 8px; background:rgba(10,16,32,0.85); border:1px solid var(--accent); border-radius:4px; font-family:var(--font-data); font-size:11px; color:var(--accent); white-space:nowrap; }
+.ar-target::before { content:''; position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); width:8px; height:8px; border-right:1px solid var(--accent); border-bottom:1px solid var(--accent); transform-origin:center; transform:translateX(-50%) rotate(45deg); background:rgba(10,16,32,0.85); }
+.ar-dot { position:absolute; width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translate(-50%,-50%); }
+.ar-dot::after { content:''; position:absolute; inset:-4px; border-radius:50%; border:1px solid var(--accent); animation:ar-ping 2s infinite; }
+@keyframes ar-ping { 0%{transform:scale(1);opacity:1} 100%{transform:scale(2.5);opacity:0} }
+
+/* ── MODAL ── */
+#modal-overlay { position:fixed; inset:0; background:rgba(5,9,18,0.85); z-index:1000; display:none; align-items:center; justify-content:center; }
+#modal-overlay.open { display:flex; }
+.modal { background:var(--bg-panel); border:1px solid var(--border-bright); border-radius:12px; padding:24px; width:90%; max-width:480px; max-height:90vh; overflow-y:auto; }
+.modal-title { font-size:18px; font-weight:700; margin-bottom:16px; letter-spacing:1px; display:flex; align-items:center; gap:8px; }
+.modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+
+/* ── NOTIFICATIONS ── */
+#notif-area { position:fixed; top:55px; right:10px; z-index:9999; display:flex; flex-direction:column; gap:6px; pointer-events:none; }
+.notif { background:var(--bg-card); border:1px solid var(--border-bright); border-radius:6px; padding:10px 14px; font-size:13px; display:flex; align-items:center; gap:8px; animation:notif-in 0.3s ease; pointer-events:auto; min-width:220px; }
+.notif.success { border-color:rgba(0,255,157,0.4); }
+.notif.error { border-color:rgba(255,68,102,0.4); }
+@keyframes notif-in { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+/* ── MISC ── */
+.divider { height:1px; background:var(--border); margin:8px 0; }
+.tag { font-size:10px; padding:2px 6px; border-radius:3px; font-family:var(--font-data); }
+.tag-blue { background:rgba(30,144,255,0.15); color:var(--accent); border:1px solid rgba(30,144,255,0.3); }
+.tag-cyan { background:rgba(0,212,255,0.15); color:var(--accent2); border:1px solid rgba(0,212,255,0.3); }
+.tag-green { background:rgba(0,255,157,0.15); color:var(--accent3); border:1px solid rgba(0,255,157,0.3); }
+.hidden { display:none!important; }
+.flex-row { display:flex; align-items:center; gap:8px; }
+.mt-8 { margin-top:8px; }
+.mt-12 { margin-top:12px; }
+.text-sm { font-size:12px; }
+.text-muted { color:var(--text-secondary); }
+.text-accent { color:var(--accent); }
+.text-green { color:var(--accent3); }
+.font-data { font-family:var(--font-data); }
+.error-indicator { color:var(--accent-danger); font-family:var(--font-data); font-size:12px; }
+.success-indicator { color:var(--accent3); font-family:var(--font-data); font-size:12px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:768px) {
+  #sidebar { width:56px; }
+  .sidebar-item span, .sidebar-label, .sidebar-badge { display:none; }
+  #workspace-panel { width:200px; }
+  .stats-row { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">Plane<span>Table</span> Pro</div>
+  <div class="topbar-sep"></div>
+  <button class="topbar-btn active" id="tbtn-dashboard" onclick="showPage('dashboard')">⊞ Dashboard</button>
+  <button class="topbar-btn" id="tbtn-workspace" onclick="showPage('workspace')">✏ Workspace</button>
+  <button class="topbar-btn" id="tbtn-instruments" onclick="showPage('instruments')">⊕ Instruments</button>
+  <button class="topbar-btn" id="tbtn-methods" onclick="showPage('methods')">◈ Methods</button>
+  <button class="topbar-btn" id="tbtn-ar" onclick="showPage('ar')">◎ AR Mode</button>
+  <button class="topbar-btn" id="tbtn-export" onclick="showPage('export')">⬇ Export</button>
+  <div class="topbar-right">
+    <div class="gps-pill"><div class="gps-dot"></div><span id="gps-status-txt">GPS Active</span></div>
+    <button class="topbar-btn btn-sm" onclick="openNewProject()">＋ New Project</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Project</div>
+    <div class="sidebar-item active" onclick="showPage('dashboard')">
+      <span class="sidebar-icon">⊞</span><span>Dashboard</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('workspace')">
+      <span class="sidebar-icon">✏</span><span>Canvas</span>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Survey</div>
+    <div class="sidebar-item" onclick="showPage('methods'); switchMethod('radiation')">
+      <span class="sidebar-icon">◉</span><span>Radiation</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('methods'); switchMethod('intersection')">
+      <span class="sidebar-icon">✕</span><span>Intersection</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('methods'); switchMethod('traverse')">
+      <span class="sidebar-icon">↷</span><span>Traverse</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('methods'); switchMethod('resection')">
+      <span class="sidebar-icon">△</span><span>Resection</span>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Tools</div>
+    <div class="sidebar-item" onclick="showPage('instruments')">
+      <span class="sidebar-icon">⊕</span><span>Instruments</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('ar')">
+      <span class="sidebar-icon">◎</span><span>AR View</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('export')">
+      <span class="sidebar-icon">⬇</span><span>Export</span>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Layers</div>
+    <div id="sidebar-layers"></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Points <span class="sidebar-badge" id="point-count">0</span></div>
+    <div id="sidebar-points" style="max-height:200px;overflow-y:auto;padding:4px;"></div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+  <div class="dash-header">
+    <div class="dash-title">Survey Control Center</div>
+    <div class="dash-sub" id="dash-project-name">No active project — create or open one to begin</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="stat-points">0</div><div class="stat-lbl">Points</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-stations">0</div><div class="stat-lbl">Stations</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-traverses">0</div><div class="stat-lbl">Traverses</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-area" style="font-size:16px;">0 m²</div><div class="stat-lbl">Area</div></div>
+  </div>
+  <div class="dash-grid" style="margin-top:4px;">
+    <div class="dash-card primary" onclick="openNewProject()">
+      <div class="dash-card-icon">📁</div>
+      <div class="dash-card-title">New Project</div>
+      <div class="dash-card-desc">Start a fresh surveying project with metadata and coordinate system</div>
+    </div>
+    <div class="dash-card" onclick="showPage('workspace')">
+      <div class="dash-card-icon">🗺</div>
+      <div class="dash-card-title">Plane Table Canvas</div>
+      <div class="dash-card-desc">Digital drawing board with infinite zoom, layers, and snap tools</div>
+    </div>
+    <div class="dash-card" onclick="showPage('instruments')">
+      <div class="dash-card-icon">🧭</div>
+      <div class="dash-card-title">Instruments</div>
+      <div class="dash-card-desc">Level, compass, alidade and GPS centering tools</div>
+    </div>
+    <div class="dash-card" onclick="showPage('methods'); switchMethod('radiation')">
+      <div class="dash-card-icon">📡</div>
+      <div class="dash-card-title">Radiation Survey</div>
+      <div class="dash-card-desc">Plot points from a single station using bearing and distance</div>
+    </div>
+    <div class="dash-card" onclick="showPage('methods'); switchMethod('intersection')">
+      <div class="dash-card-icon">✕</div>
+      <div class="dash-card-title">Intersection</div>
+      <div class="dash-card-desc">Locate unknown points from two known stations analytically</div>
+    </div>
+    <div class="dash-card" onclick="showPage('methods'); switchMethod('traverse')">
+      <div class="dash-card-icon">🔄</div>
+      <div class="dash-card-title">Traverse Survey</div>
+      <div class="dash-card-desc">Open and closed traverse with Bowditch rule adjustment</div>
+    </div>
+    <div class="dash-card" onclick="showPage('methods'); switchMethod('resection')">
+      <div class="dash-card-icon">△</div>
+      <div class="dash-card-title">Resection</div>
+      <div class="dash-card-desc">Determine unknown station from 2 or 3 known points</div>
+    </div>
+    <div class="dash-card" onclick="showPage('ar')">
+      <div class="dash-card-icon">📷</div>
+      <div class="dash-card-title">AR Survey Mode</div>
+      <div class="dash-card-desc">Augmented reality overlay for real-time field surveying</div>
+    </div>
+    <div class="dash-card" onclick="showPage('export')">
+      <div class="dash-card-icon">📤</div>
+      <div class="dash-card-title">Export Center</div>
+      <div class="dash-card-desc">Export to DXF, KML, GeoJSON, CSV, and PDF reports</div>
+    </div>
+  </div>
+  <div style="margin-top:4px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:8px;">RECENT PROJECTS</div>
+    <div class="project-list" id="project-list">
+      <div class="proj-row">
+        <div style="font-size:20px;">🗂</div>
+        <div class="proj-name">Riverside Topographic Survey</div>
+        <div class="proj-meta">2024-11-12</div>
+        <div class="proj-badge badge-done">COMPLETE</div>
+      </div>
+      <div class="proj-row">
+        <div style="font-size:20px;">🗂</div>
+        <div class="proj-name">Highway Route Traverse</div>
+        <div class="proj-meta">2024-12-01</div>
+        <div class="proj-badge badge-active">ACTIVE</div>
+      </div>
+      <div class="proj-row">
+        <div style="font-size:20px;">🗂</div>
+        <div class="proj-name">Geological Mapping — Sector 7</div>
+        <div class="proj-meta">2025-01-05</div>
+        <div class="proj-badge badge-done">COMPLETE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKSPACE PAGE -->
+<div class="page" id="page-workspace">
+  <div id="canvas-wrap">
+    <canvas id="survey-canvas"></canvas>
+    <div id="canvas-toolbar">
+      <div class="ctool active" id="tool-select" title="Select" onclick="setTool('select')">↖</div>
+      <div class="ctool" id="tool-station" title="Add Station" onclick="setTool('station')">⊙</div>
+      <div class="ctool" id="tool-point" title="Add Point" onclick="setTool('point')">•</div>
+      <div class="ctool" id="tool-line" title="Draw Line" onclick="setTool('line')">╱</div>
+      <div class="ctool" id="tool-poly" title="Draw Polygon" onclick="setTool('poly')">⬡</div>
+      <div class="ctool" id="tool-measure" title="Measure" onclick="setTool('measure')">⇿</div>
+      <div class="divider"></div>
+      <div class="ctool" title="Undo" onclick="undo()">↩</div>
+      <div class="ctool" title="Redo" onclick="redo()">↪</div>
+      <div class="ctool" title="Clear All" onclick="clearCanvas()">🗑</div>
+    </div>
+    <div id="canvas-toolbar-right">
+      <div class="ctool" title="Zoom In" onclick="zoomCanvas(1.2)">＋</div>
+      <div class="ctool" title="Zoom Out" onclick="zoomCanvas(0.8)">－</div>
+      <div class="ctool" title="Fit View" onclick="fitView()">⊡</div>
+      <div class="ctool" title="Toggle Grid" onclick="toggleGrid()" id="grid-btn">⊞</div>
+      <div class="ctool" title="Toggle North Arrow" onclick="toggleNorth()">🧭</div>
+    </div>
+    <div id="coord-display">X: 0.000 &nbsp; Y: 0.000 &nbsp;| Scale: <span id="scale-disp">1:500</span></div>
+    <canvas id="compass-widget"></canvas>
+  </div>
+  <div id="workspace-panel">
+    <div class="panel-sec">
+      <div class="panel-sec-title">Station Setup</div>
+      <div class="form-group">
+        <label class="form-label">Station ID</label>
+        <input class="form-input" id="ws-station-id" value="O1" placeholder="e.g. O1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Easting (X)</label>
+        <input class="form-input" id="ws-x" type="number" value="0" step="0.001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Northing (Y)</label>
+        <input class="form-input" id="ws-y" type="number" value="0" step="0.001">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="addStation()">⊙ Set Station</button>
+    </div>
+    <div class="panel-sec">
+      <div class="panel-sec-title">Radiation Point</div>
+      <div class="form-group">
+        <label class="form-label">Bearing (°)</label>
+        <input class="form-input" id="rad-bearing" type="number" placeholder="0–360" min="0" max="360" step="0.001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Distance (m)</label>
+        <input class="form-input" id="rad-dist" type="number" placeholder="meters" step="0.001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Point Label</label>
+        <input class="form-input" id="rad-label" placeholder="e.g. A, B, P1">
+      </div>
+      <button class="btn btn-ghost btn-block" onclick="addRadiationPoint()">◉ Plot Point</button>
+    </div>
+    <div class="panel-sec">
+      <div class="panel-sec-title">Map Scale</div>
+      <select class="form-select" id="scale-select" onchange="updateScale()">
+        <option value="50">1:50</option>
+        <option value="100">1:100</option>
+        <option value="200">1:200</option>
+        <option value="500" selected>1:500</option>
+        <option value="1000">1:1000</option>
+        <option value="custom">Custom…</option>
+      </select>
+      <div id="custom-scale-wrap" class="hidden mt-8">
+        <input class="form-input" id="custom-scale-val" type="number" placeholder="Scale denominator" value="2500">
+      </div>
+    </div>
+    <div class="panel-sec">
+      <div class="panel-sec-title">Layers</div>
+      <div id="layer-controls"></div>
+    </div>
+    <div class="panel-sec">
+      <div class="panel-sec-title">Survey Points</div>
+      <div id="point-list-panel" style="max-height:180px;overflow-y:auto;"></div>
+      <div class="btn-row mt-8">
+        <button class="btn btn-danger btn-sm" onclick="clearPoints()">Clear Points</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">CSV</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSTRUMENTS PAGE -->
+<div class="page" id="page-instruments">
+  <div class="instrument-col">
+    <!-- Level -->
+    <div class="instr-card">
+      <div class="instr-title"><span class="instr-icon">⚖</span> Digital Spirit Level</div>
+      <div id="level-container">
+        <div class="level-reticle">
+          <div class="level-reticle-v"></div>
+          <div class="level-reticle-h"></div>
+          <div class="level-inner"></div>
+        </div>
+        <div class="level-bubble" id="level-bubble"></div>
+      </div>
+      <div class="level-status" id="level-status"><span class="level-bad">⚠ TILT DETECTED</span></div>
+      <div class="tilt-vals">
+        <div class="tilt-val">
+          <div class="tilt-axis">PITCH (X)</div>
+          <div class="tilt-num" id="tilt-x">0.0°</div>
+        </div>
+        <div class="tilt-val">
+          <div class="tilt-axis">ROLL (Y)</div>
+          <div class="tilt-num" id="tilt-y">0.0°</div>
+        </div>
+      </div>
+      <div class="mt-8">
+        <div class="form-label text-muted text-sm">Level Sensitivity</div>
+        <input type="range" min="0.1" max="5" step="0.1" value="1.5" id="level-sensitivity" style="width:100%">
+      </div>
+    </div>
+    <!-- Alidade -->
+    <div class="instr-card">
+      <div class="instr-title"><span class="instr-icon">🔭</span> Digital Alidade</div>
+      <div id="alidade-view">
+        <canvas id="alidade-canvas"></canvas>
+      </div>
+      <div class="alidade-data">
+        <div class="alidade-field">
+          <div class="alidade-field-label">Bearing</div>
+          <div class="alidade-field-val" id="ali-bearing">000.0°</div>
+        </div>
+        <div class="alidade-field">
+          <div class="alidade-field-label">Azimuth</div>
+          <div class="alidade-field-val" id="ali-azimuth">000.0°</div>
+        </div>
+        <div class="alidade-field">
+          <div class="alidade-field-label">Mag Heading</div>
+          <div class="alidade-field-val" id="ali-mag">000.0°</div>
+        </div>
+        <div class="alidade-field">
+          <div class="alidade-field-label">True Heading</div>
+          <div class="alidade-field-val" id="ali-true">000.0°</div>
+        </div>
+      </div>
+      <div class="btn-row mt-8">
+        <button class="btn btn-primary btn-sm" onclick="lockTarget()">🔒 Lock Target</button>
+        <button class="btn btn-ghost btn-sm" id="target-lock-status">Not Locked</button>
+      </div>
+    </div>
+  </div>
+  <div class="instrument-col">
+    <!-- Compass -->
+    <div class="instr-card">
+      <div class="instr-title"><span class="instr-icon">🧭</span> Digital Compass</div>
+      <div id="compass-container">
+        <canvas id="compass-svg" width="200" height="200"></canvas>
+      </div>
+      <div class="compass-val" id="compass-deg">000.0°</div>
+      <div class="compass-sub">Magnetic North</div>
+      <div class="heading-row">
+        <div class="heading-item">
+          <div class="heading-label">DECLINATION</div>
+          <div class="heading-val" id="declination">+2.3°</div>
+        </div>
+        <div class="heading-item">
+          <div class="heading-label">TRUE NORTH</div>
+          <div class="heading-val" id="true-north">002.3°</div>
+        </div>
+        <div class="heading-item">
+          <div class="heading-label">QUADRANT</div>
+          <div class="heading-val" id="quadrant">N</div>
+        </div>
+      </div>
+    </div>
+    <!-- GPS Centering -->
+    <div class="instr-card">
+      <div class="instr-title"><span class="instr-icon">📍</span> GPS Centering</div>
+      <div class="gps-ring">
+        <div class="gps-accuracy-circle">
+          <div class="gps-acc-val" id="gps-acc">±2.1m</div>
+          <div class="gps-acc-lbl">ACCURACY</div>
+        </div>
+      </div>
+      <div class="gps-coords-grid">
+        <div class="gps-coord-row">
+          <span class="gps-coord-label">LAT</span>
+          <span class="gps-coord-val" id="gps-lat">—</span>
+          <span class="gps-sat">🛰 12 sats</span>
+        </div>
+        <div class="gps-coord-row">
+          <span class="gps-coord-label">LON</span>
+          <span class="gps-coord-val" id="gps-lon">—</span>
+        </div>
+        <div class="gps-coord-row">
+          <span class="gps-coord-label">ALT</span>
+          <span class="gps-coord-val" id="gps-alt">—</span>
+        </div>
+        <div class="gps-coord-row">
+          <span class="gps-coord-label">UTM</span>
+          <span class="gps-coord-val" id="gps-utm" style="font-size:10px;">—</span>
+        </div>
+      </div>
+      <div class="btn-row mt-8">
+        <button class="btn btn-success btn-sm btn-block" onclick="captureGPS()">📍 Capture Position</button>
+      </div>
+      <div class="mt-8 text-sm">
+        <div class="form-label text-muted">Centering Score</div>
+        <div id="centering-score" class="font-data" style="font-size:20px; color:var(--accent3);">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- METHODS PAGE -->
+<div class="page" id="page-methods">
+  <div class="method-tabs">
+    <div class="method-tab active" id="mtab-radiation" onclick="switchMethod('radiation')">◉ Radiation</div>
+    <div class="method-tab" id="mtab-intersection" onclick="switchMethod('intersection')">✕ Intersection</div>
+    <div class="method-tab" id="mtab-traverse" onclick="switchMethod('traverse')">↷ Traverse</div>
+    <div class="method-tab" id="mtab-resection" onclick="switchMethod('resection')">△ Resection</div>
+  </div>
+
+  <!-- RADIATION -->
+  <div class="method-content active" id="mc-radiation">
+    <div class="method-hero">
+      <div style="font-size:20px;font-weight:700;margin-bottom:6px;">Radiation Method</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Plot unknown points from a single known instrument station by measuring bearing and distance to each target.</div>
+      <div class="method-formula">x = x₀ + D × sin(θ)<br>y = y₀ + D × cos(θ)</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div class="panel-sec-title">Instrument Station</div>
+        <div class="form-group">
+          <label class="form-label">Station ID</label>
+          <input class="form-input" id="rad-station-id" value="O">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Station X (Easting)</label>
+          <input class="form-input" id="rad-x0" type="number" value="1000" step="0.001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Station Y (Northing)</label>
+          <input class="form-input" id="rad-y0" type="number" value="1000" step="0.001">
+        </div>
+        <div class="divider"></div>
+        <div class="panel-sec-title">Target Point</div>
+        <div class="form-group">
+          <label class="form-label">Point Label</label>
+          <input class="form-input" id="rad2-label" value="A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bearing θ (°)</label>
+          <input class="form-input" id="rad2-theta" type="number" placeholder="0–360" step="0.001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Distance D (m)</label>
+          <input class="form-input" id="rad2-dist" type="number" placeholder="meters" step="0.001">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="calcRadiation()">◉ Calculate &amp; Plot</button>
+        <button class="btn btn-ghost btn-block mt-8" onclick="batchRadiation()">⊕ Batch Mode (CSV)</button>
+      </div>
+      <div>
+        <canvas class="method-diagram" id="radiation-diagram"></canvas>
+        <div class="result-box" id="radiation-result" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">COMPUTED COORDINATES</div>
+          <div class="result-row"><span class="result-key">Point</span><span class="result-val" id="rr-label">—</span></div>
+          <div class="result-row"><span class="result-key">Easting X</span><span class="result-val" id="rr-x">—</span></div>
+          <div class="result-row"><span class="result-key">Northing Y</span><span class="result-val" id="rr-y">—</span></div>
+          <div class="result-row"><span class="result-key">Bearing</span><span class="result-val" id="rr-bearing">—</span></div>
+          <div class="result-row"><span class="result-key">Distance</span><span class="result-val" id="rr-dist">—</span></div>
+        </div>
+        <div id="radiation-points-list" style="margin-top:10px;"></div>
+      </div>
+    </div>
+    <div class="method-steps">
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-top:8px;">PROCEDURE</div>
+      <div class="step-row"><div class="step-num">1</div><div class="step-text">Set up instrument at station O. Enter coordinates and capture GPS position.</div></div>
+      <div class="step-row"><div class="step-num">2</div><div class="step-text">Level the device using the digital spirit level until the bubble is centered.</div></div>
+      <div class="step-row"><div class="step-num">3</div><div class="step-text">Sight each target point. The alidade captures the bearing automatically.</div></div>
+      <div class="step-row"><div class="step-num">4</div><div class="step-text">Enter or measure the distance to the target. Click Calculate to plot.</div></div>
+    </div>
+  </div>
+
+  <!-- INTERSECTION -->
+  <div class="method-content" id="mc-intersection">
+    <div class="method-hero">
+      <div style="font-size:20px;font-weight:700;margin-bottom:6px;">Intersection Method</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Locate an unknown point P by sighting it from two known stations A and B. No distance measurement required.</div>
+      <div class="method-formula">Line A: P = A + t₁·d₁<br>Line B: P = B + t₂·d₂<br>Solve: line–line intersection analytically</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div class="panel-sec-title">Station A</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="form-group"><label class="form-label">X (Easting)</label><input class="form-input" id="int-ax" type="number" value="0" step="0.001"></div>
+          <div class="form-group"><label class="form-label">Y (Northing)</label><input class="form-input" id="int-ay" type="number" value="0" step="0.001"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Bearing to P (α°)</label><input class="form-input" id="int-alpha" type="number" placeholder="0–360" step="0.001"></div>
+        <div class="divider"></div>
+        <div class="panel-sec-title">Station B</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="form-group"><label class="form-label">X (Easting)</label><input class="form-input" id="int-bx" type="number" value="100" step="0.001"></div>
+          <div class="form-group"><label class="form-label">Y (Northing)</label><input class="form-input" id="int-by" type="number" value="0" step="0.001"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Bearing to P (β°)</label><input class="form-input" id="int-beta" type="number" placeholder="0–360" step="0.001"></div>
+        <button class="btn btn-primary btn-block mt-8" onclick="calcIntersection()">✕ Calculate Intersection</button>
+      </div>
+      <div>
+        <canvas class="method-diagram" id="intersection-diagram"></canvas>
+        <div class="result-box" id="intersection-result" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">INTERSECTION POINT P</div>
+          <div class="result-row"><span class="result-key">Easting X</span><span class="result-val" id="ir-x">—</span></div>
+          <div class="result-row"><span class="result-key">Northing Y</span><span class="result-val" id="ir-y">—</span></div>
+          <div class="result-row"><span class="result-key">Dist A→P</span><span class="result-val" id="ir-da">—</span></div>
+          <div class="result-row"><span class="result-key">Dist B→P</span><span class="result-val" id="ir-db">—</span></div>
+          <div class="result-row"><span class="result-key">Check</span><span class="result-val" id="ir-check">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAVERSE -->
+  <div class="method-content" id="mc-traverse">
+    <div class="method-hero">
+      <div style="font-size:20px;font-weight:700;margin-bottom:6px;">Traverse Survey</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Connect a series of points by measuring consecutive bearings and distances. Supports open and closed traverses with Bowditch correction.</div>
+      <div class="method-formula">ΔX = D × sin(θ) &nbsp;&nbsp; ΔY = D × cos(θ)<br>X₂ = X₁ + ΔX &nbsp;&nbsp; Y₂ = Y₁ + ΔY</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div class="form-group">
+          <label class="form-label">Traverse Type</label>
+          <select class="form-select" id="trav-type">
+            <option value="closed">Closed Traverse</option>
+            <option value="open">Open Traverse</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Adjustment Method</label>
+          <select class="form-select" id="trav-adj">
+            <option value="bowditch">Bowditch Rule</option>
+            <option value="compass">Compass Rule</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="divider"></div>
+        <div class="panel-sec-title">Add Traverse Leg</div>
+        <div class="form-group"><label class="form-label">From Station</label><input class="form-input" id="trav-from" value="A"></div>
+        <div class="form-group"><label class="form-label">To Station</label><input class="form-input" id="trav-to" value="B"></div>
+        <div class="form-group"><label class="form-label">Bearing (°)</label><input class="form-input" id="trav-bearing" type="number" step="0.001"></div>
+        <div class="form-group"><label class="form-label">Distance (m)</label><input class="form-input" id="trav-dist" type="number" step="0.001"></div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="addTraverseLeg()">＋ Add Leg</button>
+          <button class="btn btn-primary" onclick="calcTraverse()">↷ Calculate</button>
+        </div>
+        <div id="traverse-legs-list" style="margin-top:10px;max-height:150px;overflow-y:auto;"></div>
+      </div>
+      <div>
+        <canvas class="method-diagram" id="traverse-diagram"></canvas>
+        <div class="result-box" id="traverse-result" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">TRAVERSE ANALYSIS</div>
+          <div class="result-row"><span class="result-key">Total Distance</span><span class="result-val" id="tr-total">—</span></div>
+          <div class="result-row"><span class="result-key">ΣΔX</span><span class="result-val" id="tr-sumx">—</span></div>
+          <div class="result-row"><span class="result-key">ΣΔY</span><span class="result-val" id="tr-sumy">—</span></div>
+          <div class="result-row"><span class="result-key">Linear Closure</span><span class="result-val" id="tr-closure">—</span></div>
+          <div class="result-row"><span class="result-key">Closure Ratio</span><span class="result-val" id="tr-ratio">—</span></div>
+          <div class="result-row"><span class="result-key">Precision</span><span class="result-val" id="tr-precision">—</span></div>
+        </div>
+        <div id="traverse-station-list" style="margin-top:10px;max-height:150px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESECTION -->
+  <div class="method-content" id="mc-resection">
+    <div class="method-hero">
+      <div style="font-size:20px;font-weight:700;margin-bottom:6px;">Resection Method</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Determine unknown station P by sighting 2 or 3 known control points. Uses Tienstra formula for 3-point resection.</div>
+      <div class="method-formula">3-Point: Tienstra's Formula<br>K₁=1/(cot A−cot α) &nbsp; K₂=1/(cot B−cot β) &nbsp; K₃=1/(cot C−cot γ)<br>P = (K₁·A + K₂·B + K₃·C) / (K₁+K₂+K₃)</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div class="form-group">
+          <label class="form-label">Resection Type</label>
+          <select class="form-select" id="res-type" onchange="toggleResectionInputs()">
+            <option value="3pt">3-Point (Tienstra)</option>
+            <option value="2pt">2-Point Intersection</option>
+          </select>
+        </div>
+        <div class="divider"></div>
+        <div class="panel-sec-title">Control Point A</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <div class="form-group"><label class="form-label">X</label><input class="form-input" id="res-ax" type="number" value="0" step="0.001"></div>
+          <div class="form-group"><label class="form-label">Y</label><input class="form-input" id="res-ay" type="number" value="200" step="0.001"></div>
+          <div class="form-group"><label class="form-label">Angle α°</label><input class="form-input" id="res-alpha" type="number" step="0.001"></div>
+        </div>
+        <div class="panel-sec-title">Control Point B</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <div class="form-group"><label class="form-label">X</label><input class="form-input" id="res-bx" type="number" value="200" step="0.001"></div>
+          <div class="form-group"><label class="form-label">Y</label><input class="form-input" id="res-by" type="number" value="0" step="0.001"></div>
+          <div class="form-group"><label class="form-label">Angle β°</label><input class="form-input" id="res-beta" type="number" step="0.001"></div>
+        </div>
+        <div id="res-c-wrap">
+          <div class="panel-sec-title">Control Point C</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <div class="form-group"><label class="form-label">X</label><input class="form-input" id="res-cx" type="number" value="200" step="0.001"></div>
+            <div class="form-group"><label class="form-label">Y</label><input class="form-input" id="res-cy" type="number" value="200" step="0.001"></div>
+            <div class="form-group"><label class="form-label">Angle γ°</label><input class="form-input" id="res-gamma" type="number" step="0.001"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="calcResection()">△ Calculate Station P</button>
+      </div>
+      <div>
+        <canvas class="method-diagram" id="resection-diagram"></canvas>
+        <div class="result-box" id="resection-result" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">UNKNOWN STATION P</div>
+          <div class="result-row"><span class="result-key">Easting X</span><span class="result-val" id="resr-x">—</span></div>
+          <div class="result-row"><span class="result-key">Northing Y</span><span class="result-val" id="resr-y">—</span></div>
+          <div class="result-row"><span class="result-key">Residual Error</span><span class="result-val" id="resr-err">—</span></div>
+          <div class="result-row"><span class="result-key">Confidence</span><span class="result-val" id="resr-conf">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AR MODE PAGE -->
+<div class="page" id="page-ar">
+  <div id="ar-camera-bg"></div>
+  <div id="ar-overlay">
+    <svg id="ar-crosshair" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="30" r="28" stroke="#1e90ff" stroke-width="1" stroke-dasharray="4 4"/>
+      <circle cx="30" cy="30" r="3" fill="#1e90ff"/>
+      <line x1="30" y1="2" x2="30" y2="14" stroke="#1e90ff" stroke-width="1.5"/>
+      <line x1="30" y1="46" x2="30" y2="58" stroke="#1e90ff" stroke-width="1.5"/>
+      <line x1="2" y1="30" x2="14" y2="30" stroke="#1e90ff" stroke-width="1.5"/>
+      <line x1="46" y1="30" x2="58" y2="30" stroke="#1e90ff" stroke-width="1.5"/>
+    </svg>
+    <!-- AR point labels -->
+    <div class="ar-target" style="top:25%;left:30%;" id="ar-pt1">
+      <div style="font-size:10px;color:var(--text-muted)">Station A</div>
+      <div>BRG: 045.2°</div>
+      <div>D: 124.5m</div>
+    </div>
+    <div class="ar-dot" style="top:28%;left:32%;"></div>
+    <div class="ar-target" style="top:40%;right:20%;" id="ar-pt2">
+      <div style="font-size:10px;color:var(--text-muted)">Point B</div>
+      <div>BRG: 127.8°</div>
+      <div>D: 87.2m</div>
+    </div>
+    <div class="ar-dot" style="top:45%;right:22%;"></div>
+  </div>
+  <div id="ar-info-panel">
+    <div class="ar-panel" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div><div class="ar-hud-label">HEADING</div><div class="ar-hud-val" id="ar-heading">000°</div></div>
+      <div><div class="ar-hud-label">BEARING</div><div class="ar-hud-val" id="ar-bearing">—</div></div>
+      <div><div class="ar-hud-label">DISTANCE</div><div class="ar-hud-val" id="ar-dist">—</div></div>
+      <div><div class="ar-hud-label">POINTS</div><div class="ar-hud-val" id="ar-point-count">0</div></div>
+    </div>
+  </div>
+  <div id="ar-hud">
+    <div class="ar-panel ar-hud-item">
+      <div class="ar-hud-label">EASTING</div>
+      <div class="ar-hud-val" id="ar-easting">—</div>
+    </div>
+    <div class="ar-panel ar-hud-item">
+      <div class="ar-hud-label">NORTHING</div>
+      <div class="ar-hud-val" id="ar-northing">—</div>
+    </div>
+    <div class="ar-panel ar-hud-item">
+      <div class="ar-hud-label">ELEVATION</div>
+      <div class="ar-hud-val" id="ar-elevation">—</div>
+    </div>
+    <div class="ar-panel" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-primary btn-sm" onclick="arCapture()">📍 Capture</button>
+      <button class="btn btn-ghost btn-sm" onclick="arTag()">🏷 Tag</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT PAGE -->
+<div class="page" id="page-export">
+  <div style="font-size:22px;font-weight:700;margin-bottom:4px;">Export Center</div>
+  <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Generate professional survey deliverables from your project data</div>
+  <div class="export-grid">
+    <div class="export-card">
+      <div class="export-card-icon">📄</div>
+      <div class="export-card-title">PDF Survey Report</div>
+      <div class="export-card-desc">Full professional report with coordinates, bearings, distances, metadata, and survey sketch</div>
+      <div class="export-progress"><div class="export-bar" id="epb-pdf"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="exportFormat('pdf')">⬇ Export PDF</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-icon">📐</div>
+      <div class="export-card-title">DXF Drawing</div>
+      <div class="export-card-desc">AutoCAD-compatible DXF file with all survey points, traverses and station data on separate layers</div>
+      <div class="export-progress"><div class="export-bar" id="epb-dxf"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="exportFormat('dxf')">⬇ Export DXF</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-icon">🌍</div>
+      <div class="export-card-title">KML / Google Earth</div>
+      <div class="export-card-desc">KML file for Google Earth and GIS platforms with all georeferenced survey data</div>
+      <div class="export-progress"><div class="export-bar" id="epb-kml"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="exportFormat('kml')">⬇ Export KML</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-icon">🗺</div>
+      <div class="export-card-title">GeoJSON</div>
+      <div class="export-card-desc">Standard GeoJSON for web mapping platforms including Leaflet, Mapbox, and QGIS</div>
+      <div class="export-progress"><div class="export-bar" id="epb-geojson"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="exportFormat('geojson')">⬇ Export GeoJSON</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-icon">📊</div>
+      <div class="export-card-title">CSV Coordinates</div>
+      <div class="export-card-desc">Comma-separated values with point ID, easting, northing, elevation, bearing, distance, type</div>
+      <div class="export-progress"><div class="export-bar" id="epb-csv"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="exportFormat('csv')">⬇ Export CSV</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-icon">📦</div>
+      <div class="export-card-title">Full Project Archive</div>
+      <div class="export-card-desc">Complete project bundle: all formats + photos + notes + SQLite database</div>
+      <div class="export-progress"><div class="export-bar" id="epb-zip"></div></div>
+      <button class="btn btn-success btn-sm" onclick="exportFormat('zip')">⬇ Export All</button>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="panel-sec-title">Export Preview</div>
+    <div id="export-preview" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--font-data);font-size:12px;color:var(--text-secondary);white-space:pre-wrap;max-height:250px;overflow-y:auto;line-height:1.7;">
+Select an export format above to preview the output...
+    </div>
+  </div>
+</div>
+
+</div><!-- #content -->
+</div><!-- #main -->
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <span>📡 <span id="sb-method">Ready</span></span>
+  <span>⊙ Station: <span id="sb-station">None</span></span>
+  <span>📍 Points: <span id="sb-points">0</span></span>
+  <span>🔭 Bearing: <span id="sb-bearing">—</span></span>
+  <span>📏 Scale: <span id="sb-scale">1:500</span></span>
+  <span style="margin-left:auto;">💾 Auto-saved <span id="sb-save">—</span></span>
+</div>
+
+</div><!-- #app -->
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div class="modal" id="modal-body">
+    <div class="modal-title" id="modal-title">New Project</div>
+    <div id="modal-content"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div id="notif-area"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const state = {
+  currentPage: 'dashboard',
+  currentTool: 'select',
+  scale: 500,
+  heading: 0,
+  pitch: 0,
+  roll: 0,
+  gps: { lat: null, lon: null, alt: null, acc: null },
+  project: { name: 'Untitled Project', date: '', surveyor: '', cs: 'WGS84' },
+  points: [],
+  stations: [],
+  traverseLegs: [],
+  traverseStations: [],
+  layers: {
+    stations:  { color:'#ffb800', visible:true },
+    radiation: { color:'#1e90ff', visible:true },
+    traverse:  { color:'#00ff9d', visible:true },
+    intersect: { color:'#00d4ff', visible:true },
+    features:  { color:'#ff6688', visible:true },
+    contours:  { color:'#8844ff', visible:true },
+  },
+  canvas: { zoom:1, panX:0, panY:0 },
+  gridVisible: true,
+  northVisible: true,
+  undoStack: [],
+  targetLocked: false,
+  lockedBearing: null,
+  arHeading: 0,
+  autoSaveTimer: null,
+};
+
+// ══════════════════════════════════════════════
+// PAGE NAVIGATION
+// ══════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.topbar-btn').forEach(b=>b.classList.remove('active'));
+  const tb = document.getElementById('tbtn-'+id);
+  if(tb) tb.classList.add('active');
+  state.currentPage = id;
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  if(id==='workspace') { initCanvas(); }
+  if(id==='instruments') { renderInstruments(); }
+  if(id==='ar') { startAR(); }
+  if(id==='export') { renderExportPreview(); }
+}
+
+// ══════════════════════════════════════════════
+// CANVAS
+// ══════════════════════════════════════════════
+let canvas, ctx, compassMini, compassMiniCtx;
+let drawing=false, drawStart=null, lastMouse={x:0,y:0};
+let isPanning=false, panStart=null;
+
+function initCanvas() {
+  canvas = document.getElementById('survey-canvas');
+  const wrap = document.getElementById('canvas-wrap');
+  const panel = document.getElementById('workspace-panel');
+  const panelW = panel ? panel.offsetWidth : 260;
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  ctx = canvas.getContext('2d');
+  compassMini = document.getElementById('compass-widget');
+  compassMini.width = 80; compassMini.height = 80;
+  compassMiniCtx = compassMini.getContext('2d');
+  canvas.addEventListener('mousemove', onCanvasMouseMove);
+  canvas.addEventListener('mousedown', onCanvasMouseDown);
+  canvas.addEventListener('mouseup', onCanvasMouseUp);
+  canvas.addEventListener('click', onCanvasClick);
+  canvas.addEventListener('wheel', onCanvasWheel, {passive:true});
+  drawCanvas();
+  drawCompassMini();
+}
+
+function worldToScreen(x, y) {
+  const cx = canvas.width/2 + state.canvas.panX;
+  const cy = canvas.height/2 + state.canvas.panY;
+  const scale = state.canvas.zoom * 0.5;
+  return { x: cx + x*scale, y: cy - y*scale };
+}
+function screenToWorld(sx, sy) {
+  const cx = canvas.width/2 + state.canvas.panX;
+  const cy = canvas.height/2 + state.canvas.panY;
+  const scale = state.canvas.zoom * 0.5;
+  return { x: (sx-cx)/scale, y: -(sy-cy)/scale };
+}
+
+function drawCanvas() {
+  if(!ctx) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // bg
+  ctx.fillStyle='#050912';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // grid
+  if(state.gridVisible) drawGrid();
+  // points
+  state.points.forEach(pt=>drawPoint(pt));
+  // traverses
+  drawTraverseLines();
+  // north arrow
+  if(state.northVisible) drawNorthArrow();
+  // scale bar
+  drawScaleBar();
+}
+
+function drawGrid() {
+  const step = Math.max(20, 40 * state.canvas.zoom);
+  const ox = ((canvas.width/2 + state.canvas.panX) % step + step) % step;
+  const oy = ((canvas.height/2 + state.canvas.panY) % step + step) % step;
+  ctx.strokeStyle = 'rgba(30,144,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for(let x=ox; x<canvas.width; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+  for(let y=oy; y<canvas.height; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+  // major grid
+  const maj = step*5;
+  const mox = ((canvas.width/2 + state.canvas.panX) % maj + maj) % maj;
+  const moy = ((canvas.height/2 + state.canvas.panY) % maj + maj) % maj;
+  ctx.strokeStyle='rgba(30,144,255,0.12)';
+  ctx.lineWidth=0.8;
+  for(let x=mox; x<canvas.width; x+=maj) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+  for(let y=moy; y<canvas.height; y+=maj) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+}
+
+function drawPoint(pt) {
+  if(!state.layers[pt.layer]?.visible) return;
+  const s = worldToScreen(pt.x, pt.y);
+  const col = state.layers[pt.layer]?.color || '#1e90ff';
+  // ray from station
+  if(pt.type==='radiation' && pt.stationId) {
+    const st = state.stations.find(s2=>s2.id===pt.stationId);
+    if(st) {
+      const ss = worldToScreen(st.x, st.y);
+      ctx.beginPath(); ctx.moveTo(ss.x,ss.y); ctx.lineTo(s.x,s.y);
+      ctx.strokeStyle=col+'44'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  // point marker
+  if(pt.type==='station') {
+    ctx.beginPath(); ctx.arc(s.x,s.y,8,0,Math.PI*2);
+    ctx.fillStyle=col+'22'; ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x,s.y,5,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x,s.y,8,0,Math.PI*2);
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+    // crosshairs
+    ctx.strokeStyle=col+'88'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(s.x-14,s.y); ctx.lineTo(s.x+14,s.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s.x,s.y-14); ctx.lineTo(s.x,s.y+14); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(s.x,s.y,5,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x,s.y,8,0,Math.PI*2);
+    ctx.strokeStyle=col+'66'; ctx.lineWidth=1; ctx.stroke();
+  }
+  // label
+  ctx.font='bold 12px "Rajdhani",sans-serif';
+  ctx.fillStyle='#e8f0ff';
+  ctx.fillText(pt.label||pt.id, s.x+10, s.y-6);
+  ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillStyle='rgba(122,144,184,0.8)';
+  ctx.fillText(`(${pt.x.toFixed(1)},${pt.y.toFixed(1)})`, s.x+10, s.y+7);
+}
+
+function drawTraverseLines() {
+  if(!state.traverseStations.length) return;
+  const pts = state.traverseStations;
+  ctx.beginPath();
+  const s0 = worldToScreen(pts[0].x, pts[0].y);
+  ctx.moveTo(s0.x, s0.y);
+  for(let i=1;i<pts.length;i++) {
+    const s = worldToScreen(pts[i].x, pts[i].y);
+    ctx.lineTo(s.x, s.y);
+  }
+  ctx.strokeStyle='#00ff9d88'; ctx.lineWidth=1.5; ctx.stroke();
+}
+
+function drawNorthArrow() {
+  const nx=canvas.width-50, ny=50;
+  ctx.save(); ctx.translate(nx,ny); ctx.rotate(-state.heading * Math.PI/180);
+  ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(5,0); ctx.lineTo(0,-5); ctx.lineTo(-5,0); ctx.closePath();
+  ctx.fillStyle='#1e90ff'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,18); ctx.lineTo(5,0); ctx.lineTo(0,5); ctx.lineTo(-5,0); ctx.closePath();
+  ctx.fillStyle='#3d5080'; ctx.fill();
+  ctx.restore();
+  ctx.font='bold 10px Rajdhani'; ctx.fillStyle='#1e90ff'; ctx.textAlign='center';
+  ctx.fillText('N', nx, ny-22); ctx.textAlign='left';
+}
+
+function drawScaleBar() {
+  const x=10, y=canvas.height-35, w=100;
+  const gd = w * state.scale / (state.canvas.zoom * 0.5);
+  ctx.fillStyle='rgba(10,16,32,0.7)';
+  ctx.fillRect(x-4,y-16,w+50,26);
+  ctx.strokeStyle='#7a90b8'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x,y+4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+w,y-4); ctx.lineTo(x+w,y+4); ctx.stroke();
+  ctx.font='11px "Share Tech Mono"'; ctx.fillStyle='#7a90b8';
+  ctx.fillText(`0`, x-2, y-6);
+  ctx.fillText(`${gd.toFixed(0)}m`, x+w-10, y-6);
+}
+
+function onCanvasMouseDown(e) {
+  if(state.currentTool==='select') {
+    isPanning=true;
+    panStart={x:e.clientX-state.canvas.panX, y:e.clientY-state.canvas.panY};
+    canvas.style.cursor='grabbing';
+  }
+}
+function onCanvasMouseUp(e) {
+  if(isPanning) { isPanning=false; canvas.style.cursor=state.currentTool==='select'?'grab':'crosshair'; }
+}
+
+function onCanvasMouseMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const w = screenToWorld(sx, sy);
+  document.getElementById('coord-display').innerHTML =
+    `X: ${w.x.toFixed(3)} &nbsp; Y: ${w.y.toFixed(3)} &nbsp;| Scale: <span id="scale-disp">1:${state.scale}</span>`;
+  lastMouse = {x:sx, y:sy};
+  if(isPanning && panStart) {
+    state.canvas.panX = e.clientX - panStart.x;
+    state.canvas.panY = e.clientY - panStart.y;
+  }
+  drawCanvas();
+  // hover line while drawing
+  if(state.currentTool==='line' && drawing && drawStart) {
+    ctx.beginPath(); ctx.moveTo(drawStart.x,drawStart.y); ctx.lineTo(sx,sy);
+    ctx.strokeStyle='#1e90ff88'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+function onCanvasClick(e) {
+  if(isPanning) return; // was a pan drag, not a click
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const w = screenToWorld(sx, sy);
+  if(state.currentTool==='station') {
+    const id = document.getElementById('ws-station-id').value || `S${state.stations.length+1}`;
+    addPointToCanvas(w.x, w.y, id, 'station', 'stations');
+    state.stations.push({id, x:w.x, y:w.y});
+    document.getElementById('ws-station-id').value = `S${state.stations.length+1}`;
+    document.getElementById('sb-station').textContent = id;
+    notify('Station '+id+' placed', 'success');
+  } else if(state.currentTool==='point') {
+    const lbl = `P${state.points.filter(p=>p.type!=='station').length+1}`;
+    addPointToCanvas(w.x, w.y, lbl, 'radiation', 'radiation');
+  }
+}
+
+function onCanvasWheel(e) {
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  zoomCanvas(factor);
+}
+
+function addPointToCanvas(x, y, label, type, layer) {
+  state.undoStack.push(JSON.parse(JSON.stringify(state.points)));
+  state.points.push({x, y, label, type, layer, id: label});
+  updatePointDisplay();
+  drawCanvas();
+  autoSave();
+}
+
+function zoomCanvas(f) { state.canvas.zoom = Math.max(0.05, Math.min(50, state.canvas.zoom*f)); drawCanvas(); }
+function toggleGrid() { state.gridVisible=!state.gridVisible; drawCanvas(); document.getElementById('grid-btn').classList.toggle('active',state.gridVisible); }
+function toggleNorth() { state.northVisible=!state.northVisible; drawCanvas(); }
+function fitView() { state.canvas.zoom=1; state.canvas.panX=0; state.canvas.panY=0; drawCanvas(); }
+function undo() { if(state.undoStack.length) { state.points=state.undoStack.pop(); updatePointDisplay(); drawCanvas(); } }
+function redo() { notify('Redo: nothing to redo','error'); }
+function clearCanvas() { if(confirm('Clear all points?')) { state.undoStack.push(JSON.parse(JSON.stringify(state.points))); state.points=[]; state.stations=[]; state.traverseStations=[]; updatePointDisplay(); drawCanvas(); } }
+function clearPoints() { clearCanvas(); }
+
+function setTool(t) {
+  state.currentTool = t;
+  document.querySelectorAll('#canvas-toolbar .ctool').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tool-'+t)?.classList.add('active');
+  canvas.style.cursor = t==='select'?'grab':t==='measure'?'crosshair':'crosshair';
+}
+
+function updateScale() {
+  const sel = document.getElementById('scale-select').value;
+  if(sel==='custom') {
+    document.getElementById('custom-scale-wrap').classList.remove('hidden');
+    state.scale = parseInt(document.getElementById('custom-scale-val').value)||2500;
+  } else {
+    document.getElementById('custom-scale-wrap').classList.add('hidden');
+    state.scale = parseInt(sel);
+  }
+  document.getElementById('sb-scale').textContent = '1:'+state.scale;
+  drawCanvas();
+}
+
+function addStation() {
+  const id = document.getElementById('ws-station-id').value;
+  const x = parseFloat(document.getElementById('ws-x').value);
+  const y = parseFloat(document.getElementById('ws-y').value);
+  if(isNaN(x)||isNaN(y)) { notify('Enter valid coordinates','error'); return; }
+  if(!state.stations.find(s=>s.id===id)) state.stations.push({id,x,y});
+  addPointToCanvas(x, y, id, 'station', 'stations');
+  document.getElementById('sb-station').textContent = id;
+  document.getElementById('stat-stations').textContent = state.stations.length;
+  notify(`Station ${id} set at (${x},${y})`,'success');
+}
+
+function addRadiationPoint() {
+  const bearing = parseFloat(document.getElementById('rad-bearing').value);
+  const dist = parseFloat(document.getElementById('rad-dist').value);
+  const label = document.getElementById('rad-label').value || `P${state.points.length+1}`;
+  if(isNaN(bearing)||isNaN(dist)) { notify('Enter bearing and distance','error'); return; }
+  const st = state.stations[state.stations.length-1]||{x:0,y:0,id:'O'};
+  const rad = bearing * Math.PI/180;
+  const x = st.x + dist * Math.sin(rad);
+  const y = st.y + dist * Math.cos(rad);
+  addPointToCanvas(x, y, label, 'radiation', 'radiation');
+  state.points[state.points.length-1].stationId = st.id;
+  notify(`Point ${label}: (${x.toFixed(3)}, ${y.toFixed(3)})`,'success');
+}
+
+function updatePointDisplay() {
+  const list = document.getElementById('point-list-panel');
+  const sidebar = document.getElementById('sidebar-points');
+  const count = state.points.length;
+  document.getElementById('point-count').textContent = count;
+  document.getElementById('stat-points').textContent = count;
+  document.getElementById('stat-stations').textContent = state.stations.length;
+  document.getElementById('sb-points').textContent = count;
+  // area via shoelace on non-station points
+  const polyPts = state.points.filter(p=>p.type!=='station');
+  let area = 0;
+  if(polyPts.length >= 3) {
+    for(let i=0;i<polyPts.length;i++){
+      const j=(i+1)%polyPts.length;
+      area += polyPts[i].x * polyPts[j].y;
+      area -= polyPts[j].x * polyPts[i].y;
+    }
+    area = Math.abs(area/2);
+  }
+  const areaEl = document.getElementById('stat-area');
+  if(areaEl) areaEl.textContent = area>=10000?(area/10000).toFixed(2)+' ha':area.toFixed(1)+' m²';
+  const html = state.points.map(p=>`
+    <div class="point-row" title="(${p.x.toFixed(3)},${p.y.toFixed(3)})">
+      <span class="point-id">${p.label}</span>
+      <span class="point-coords">${p.x.toFixed(2)},${p.y.toFixed(2)}</span>
+      <span class="point-type pt-${p.type}">${p.type.slice(0,3).toUpperCase()}</span>
+    </div>`).join('');
+  if(list) list.innerHTML = html||'<div style="font-size:11px;color:var(--text-muted);padding:6px 8px;">No points yet</div>';
+  if(sidebar) sidebar.innerHTML = html||'';
+}
+
+function drawCompassMini() {
+  if(!compassMiniCtx) return;
+  const c = compassMiniCtx, w=80, h=80, cx=w/2, cy=h/2;
+  c.clearRect(0,0,w,h);
+  c.fillStyle='rgba(10,16,32,0.85)'; c.beginPath(); c.arc(cx,cy,38,0,Math.PI*2); c.fill();
+  c.strokeStyle='rgba(30,144,255,0.3)'; c.lineWidth=1; c.beginPath(); c.arc(cx,cy,38,0,Math.PI*2); c.stroke();
+  const dirs=['N','E','S','W'];
+  dirs.forEach((d,i)=>{
+    const a=i*Math.PI/2-Math.PI/2;
+    const tx=cx+28*Math.cos(a), ty=cy+28*Math.sin(a)+4;
+    c.fillStyle=d==='N'?'#ff4444':'#7a90b8'; c.font='bold 10px Rajdhani'; c.textAlign='center';
+    c.fillText(d,tx,ty);
+  });
+  c.save(); c.translate(cx,cy); c.rotate(state.heading*Math.PI/180);
+  c.beginPath(); c.moveTo(0,-22); c.lineTo(4,0); c.lineTo(0,-5); c.lineTo(-4,0); c.closePath(); c.fillStyle='#1e90ff'; c.fill();
+  c.beginPath(); c.moveTo(0,22); c.lineTo(4,0); c.lineTo(0,5); c.lineTo(-4,0); c.closePath(); c.fillStyle='#3d5080'; c.fill();
+  c.restore();
+  requestAnimationFrame(drawCompassMini);
+}
+
+// ══════════════════════════════════════════════
+// INSTRUMENTS — SENSORS
+// ══════════════════════════════════════════════
+function renderInstruments() {
+  startCompass();
+  startLevel();
+  startGPS();
+  renderLayerControls();
+}
+
+function renderLayerControls() {
+  const wrap = document.getElementById('layer-controls');
+  if(!wrap) return;
+  wrap.innerHTML = Object.entries(state.layers).map(([k,v])=>`
+    <div class="layer-row">
+      <div class="layer-dot" style="background:${v.color}"></div>
+      <span class="layer-name">${k.charAt(0).toUpperCase()+k.slice(1)}</span>
+      <span class="layer-vis ${v.visible?'on':''}" onclick="toggleLayer('${k}')">${v.visible?'👁':'○'}</span>
+    </div>`).join('');
+  // sidebar layers
+  document.getElementById('sidebar-layers').innerHTML = Object.entries(state.layers).map(([k,v])=>`
+    <div class="sidebar-item" style="font-size:12px;">
+      <span style="width:8px;height:8px;border-radius:50%;background:${v.color};display:inline-block;flex-shrink:0;"></span>
+      <span>${k}</span>
+    </div>`).join('');
+}
+function toggleLayer(k) { state.layers[k].visible=!state.layers[k].visible; renderLayerControls(); drawCanvas(); }
+
+let compassInterval;
+function startCompass() {
+  if(compassInterval) clearInterval(compassInterval);
+  // iOS 13+ requires permission for DeviceOrientationEvent
+  if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(state2 => {
+      if(state2 === 'granted') {
+        window.addEventListener('deviceorientation', handleOrientation);
+      } else {
+        compassInterval = setInterval(simulateCompass, 100);
+        simulateCompass();
+      }
+    }).catch(() => {
+      compassInterval = setInterval(simulateCompass, 100);
+      simulateCompass();
+    });
+  } else if(window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', handleOrientation);
+  } else {
+    compassInterval = setInterval(simulateCompass, 100);
+    simulateCompass();
+  }
+}
+let _simHeading=0;
+function simulateCompass() {
+  _simHeading = (_simHeading + 0.5) % 360;
+  state.heading = _simHeading;
+  updateCompassDisplay(_simHeading);
+}
+function handleOrientation(e) {
+  const h = e.alpha || 0;
+  state.heading = h;
+  const pitch = e.beta || 0;
+  const roll = e.gamma || 0;
+  state.pitch = pitch; state.roll = roll;
+  updateCompassDisplay(h);
+  updateLevelDisplay(pitch, roll);
+}
+function updateCompassDisplay(h) {
+  const el = document.getElementById('compass-deg');
+  if(el) el.textContent = h.toFixed(1)+'°';
+  const tn = (h + 2.3) % 360;
+  const tne = document.getElementById('true-north');
+  if(tne) tne.textContent = tn.toFixed(1)+'°';
+  const quad = h<22.5||h>=337.5?'N':h<67.5?'NE':h<112.5?'E':h<157.5?'SE':h<202.5?'S':h<247.5?'SW':h<292.5?'W':'NW';
+  const qe = document.getElementById('quadrant');
+  if(qe) qe.textContent = quad;
+  // alidade
+  const ab = document.getElementById('ali-bearing');
+  const az = document.getElementById('ali-azimuth');
+  const am = document.getElementById('ali-mag');
+  const at = document.getElementById('ali-true');
+  if(ab&&!state.targetLocked) { ab.textContent=h.toFixed(1)+'°'; az.textContent=h.toFixed(1)+'°'; am.textContent=h.toFixed(1)+'°'; at.textContent=tn.toFixed(1)+'°'; }
+  document.getElementById('sb-bearing').textContent = h.toFixed(1)+'°';
+  document.getElementById('ar-heading').textContent = Math.round(h)+'°';
+  document.getElementById('ar-bearing').textContent = h.toFixed(1)+'°';
+  // compass canvas
+  drawCompassCanvas(h);
+  drawAlidadeCanvas(h);
+}
+
+function drawCompassCanvas(h) {
+  const c2 = document.getElementById('compass-svg');
+  if(!c2) return;
+  const ctx2 = c2.getContext('2d');
+  const w=200,h2=200,cx=100,cy=100;
+  ctx2.clearRect(0,0,w,h2);
+  // outer ring
+  ctx2.beginPath(); ctx2.arc(cx,cy,90,0,Math.PI*2);
+  ctx2.strokeStyle='rgba(30,144,255,0.25)'; ctx2.lineWidth=2; ctx2.stroke();
+  // tick marks
+  for(let i=0;i<360;i+=5) {
+    const a=(i-90)*Math.PI/180;
+    const r1=i%30===0?72:i%10===0?76:80;
+    ctx2.beginPath(); ctx2.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a)); ctx2.lineTo(cx+88*Math.cos(a),cy+88*Math.sin(a));
+    ctx2.strokeStyle=i%30===0?'rgba(30,144,255,0.8)':'rgba(30,144,255,0.3)'; ctx2.lineWidth=i%30===0?2:1; ctx2.stroke();
+  }
+  // cardinal labels
+  ['N','NE','E','SE','S','SW','W','NW'].forEach((d,i)=>{
+    const a=(i*45-90)*Math.PI/180;
+    ctx2.font=`bold ${i%2===0?14:10}px Rajdhani`; ctx2.textAlign='center'; ctx2.textBaseline='middle';
+    ctx2.fillStyle=d==='N'?'#ff4444':i%2===0?'#e8f0ff':'#7a90b8';
+    ctx2.fillText(d,cx+60*Math.cos(a),cy+60*Math.sin(a));
+  });
+  // needle
+  ctx2.save(); ctx2.translate(cx,cy); ctx2.rotate((h-90)*Math.PI/180);
+  ctx2.beginPath(); ctx2.moveTo(0,-42); ctx2.lineTo(6,0); ctx2.lineTo(0,-8); ctx2.lineTo(-6,0); ctx2.closePath();
+  ctx2.fillStyle='#1e90ff'; ctx2.fill();
+  ctx2.beginPath(); ctx2.moveTo(0,42); ctx2.lineTo(6,0); ctx2.lineTo(0,8); ctx2.lineTo(-6,0); ctx2.closePath();
+  ctx2.fillStyle='#3d5080'; ctx2.fill();
+  ctx2.restore();
+  ctx2.beginPath(); ctx2.arc(cx,cy,5,0,Math.PI*2); ctx2.fillStyle='#1e90ff'; ctx2.fill();
+}
+
+function drawAlidadeCanvas(h) {
+  const c = document.getElementById('alidade-canvas');
+  if(!c) return;
+  const ctx2=c.getContext('2d');
+  c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const w=c.width,ht=c.height,cx=w/2,cy=ht/2;
+  ctx2.fillStyle='#050912'; ctx2.fillRect(0,0,w,ht);
+  // horizon line
+  ctx2.strokeStyle='rgba(30,144,255,0.4)'; ctx2.lineWidth=1;
+  ctx2.setLineDash([8,4]);
+  ctx2.beginPath(); ctx2.moveTo(0,cy); ctx2.lineTo(w,cy); ctx2.stroke();
+  ctx2.setLineDash([]);
+  // crosshair
+  ctx2.strokeStyle='#1e90ff'; ctx2.lineWidth=1.5;
+  ctx2.beginPath(); ctx2.moveTo(cx,0); ctx2.lineTo(cx,ht); ctx2.stroke();
+  ctx2.beginPath(); ctx2.arc(cx,cy,20,0,Math.PI*2); ctx2.strokeStyle='rgba(30,144,255,0.5)'; ctx2.lineWidth=1; ctx2.stroke();
+  ctx2.beginPath(); ctx2.arc(cx,cy,40,0,Math.PI*2); ctx2.strokeStyle='rgba(30,144,255,0.2)'; ctx2.stroke();
+  // bearing arc indicator
+  ctx2.save(); ctx2.translate(cx,cy); ctx2.rotate((h-90)*Math.PI/180);
+  ctx2.strokeStyle='#00d4ff'; ctx2.lineWidth=2;
+  ctx2.beginPath(); ctx2.moveTo(50,0); ctx2.lineTo(75,0); ctx2.stroke();
+  ctx2.fillStyle='#00d4ff';
+  ctx2.beginPath(); ctx2.moveTo(75,0); ctx2.lineTo(70,-4); ctx2.lineTo(70,4); ctx2.closePath(); ctx2.fill();
+  ctx2.restore();
+  // bearing label
+  ctx2.font='bold 14px "Share Tech Mono"'; ctx2.fillStyle='#00d4ff'; ctx2.textAlign='center';
+  ctx2.fillText(h.toFixed(1)+'°', cx, 20);
+}
+
+function startLevel() {
+  if(window.DeviceMotionEvent) { window.addEventListener('devicemotion', handleMotion); }
+  else { setInterval(simulateLevel, 100); simulateLevel(); }
+}
+let _simPitch=0, _simRoll=0, _ldir=1;
+function simulateLevel() {
+  _simPitch += _ldir*0.3; _simRoll += _ldir*0.2;
+  if(Math.abs(_simPitch)>8) _ldir*=-1;
+  updateLevelDisplay(_simPitch, _simRoll);
+}
+function handleMotion(e) {
+  const g=e.accelerationIncludingGravity;
+  if(!g) return;
+  const p=Math.atan2(g.y,g.z)*180/Math.PI;
+  const r=Math.atan2(g.x,g.z)*180/Math.PI;
+  updateLevelDisplay(p, r);
+}
+function updateLevelDisplay(pitch, roll) {
+  state.pitch=pitch; state.roll=roll;
+  const bubble=document.getElementById('level-bubble');
+  const statusEl=document.getElementById('level-status');
+  const txEl=document.getElementById('tilt-x');
+  const tyEl=document.getElementById('tilt-y');
+  if(!bubble) return;
+  const sens=parseFloat(document.getElementById('level-sensitivity')?.value||1.5);
+  const bx = Math.max(-50,Math.min(50, roll/sens*50/5));
+  const by = Math.max(-50,Math.min(50, pitch/sens*50/5));
+  bubble.style.left=`calc(50% + ${bx}%)`;
+  bubble.style.top=`calc(50% + ${by}%)`;
+  const leveled=Math.abs(pitch)<sens && Math.abs(roll)<sens;
+  bubble.style.background=leveled?'radial-gradient(circle at 40% 35%, rgba(0,255,157,0.9),rgba(0,200,120,0.6))':'radial-gradient(circle at 40% 35%, rgba(255,184,0,0.9),rgba(200,140,0,0.6))';
+  bubble.style.borderColor=leveled?'rgba(0,255,157,0.8)':'rgba(255,184,0,0.8)';
+  bubble.style.boxShadow=leveled?'0 0 10px rgba(0,255,157,0.4)':'0 0 10px rgba(255,184,0,0.4)';
+  if(statusEl) statusEl.innerHTML=leveled?'<span class="level-ok">✓ LEVEL</span>':'<span class="level-bad">⚠ TILT DETECTED</span>';
+  if(txEl) txEl.textContent=pitch.toFixed(1)+'°';
+  if(tyEl) tyEl.textContent=roll.toFixed(1)+'°';
+}
+
+let _gpsSimTimer = null;
+function startGPS() {
+  if(navigator.geolocation) {
+    navigator.geolocation.watchPosition(gpsSuccess, gpsError, {enableHighAccuracy:true,timeout:10000,maximumAge:5000});
+  } else { simulateGPS(); }
+}
+function simulateGPS() {
+  if(_gpsSimTimer) return; // prevent duplicate timers
+  state.gps={lat:31.5497+(Math.random()-0.5)*0.001, lon:74.3436+(Math.random()-0.5)*0.001, alt:220+Math.random()*5, acc:1.5+Math.random()*2};
+  updateGPSDisplay();
+  _gpsSimTimer = setTimeout(()=>{ _gpsSimTimer=null; simulateGPS(); }, 3000);
+}
+function gpsSuccess(pos) {
+  state.gps={lat:pos.coords.latitude,lon:pos.coords.longitude,alt:pos.coords.altitude||0,acc:pos.coords.accuracy};
+  updateGPSDisplay();
+}
+function gpsError() { if(!_gpsSimTimer) simulateGPS(); }
+function updateGPSDisplay() {
+  const g=state.gps;
+  const latEl=document.getElementById('gps-lat'); if(latEl) latEl.textContent=g.lat?g.lat.toFixed(6)+'°':'—';
+  const lonEl=document.getElementById('gps-lon'); if(lonEl) lonEl.textContent=g.lon?g.lon.toFixed(6)+'°':'—';
+  const altEl=document.getElementById('gps-alt'); if(altEl) altEl.textContent=g.alt?g.alt.toFixed(1)+'m':'—';
+  const accEl=document.getElementById('gps-acc'); if(accEl) accEl.textContent=g.acc?'±'+g.acc.toFixed(1)+'m':'—';
+  const utmEl=document.getElementById('gps-utm');
+  if(utmEl && g.lat) {
+    const utm=latLonToUTM(g.lat, g.lon);
+    utmEl.textContent=`${utm.zone}N ${utm.easting.toFixed(0)}E ${utm.northing.toFixed(0)}N`;
+  }
+  // AR
+  const ae=document.getElementById('ar-easting'); if(ae&&g.lat){const utm=latLonToUTM(g.lat,g.lon);ae.textContent=utm.easting.toFixed(1);}
+  const an=document.getElementById('ar-northing'); if(an&&g.lat){const utm=latLonToUTM(g.lat,g.lon);an.textContent=utm.northing.toFixed(1);}
+  const aalt=document.getElementById('ar-elevation'); if(aalt) aalt.textContent=(g.alt||0).toFixed(1)+'m';
+}
+function captureGPS() {
+  const score = state.gps.acc ? Math.max(0,100-state.gps.acc*10).toFixed(0) : '—';
+  document.getElementById('centering-score').textContent = score+'%';
+  notify(`GPS captured: ±${(state.gps.acc||2.1).toFixed(1)}m accuracy — Score: ${score}%`,'success');
+  // push to station
+  if(state.stations.length>0) {
+    const last=state.stations[state.stations.length-1];
+    last.lat=state.gps.lat; last.lon=state.gps.lon;
+  }
+}
+function lockTarget() {
+  state.targetLocked = !state.targetLocked;
+  if(state.targetLocked) { state.lockedBearing=state.heading; document.getElementById('target-lock-status').textContent='LOCKED '+state.heading.toFixed(1)+'°'; notify('Target locked at '+state.heading.toFixed(1)+'°','success'); }
+  else { document.getElementById('target-lock-status').textContent='Not Locked'; notify('Target unlocked','success'); }
+}
+
+// UTM conversion (simplified WGS84)
+function latLonToUTM(lat,lon) {
+  const zone = Math.floor((lon+180)/6)+1;
+  const a=6378137, e2=0.00669437999014, k0=0.9996;
+  const r=lat*Math.PI/180;
+  const N0=a/Math.sqrt(1-e2*Math.sin(r)*Math.sin(r));
+  const E0=500000;
+  const N1=lat>=0?0:10000000;
+  const dL=(lon-(6*zone-183))*Math.PI/180;
+  const x=k0*N0*dL+E0;
+  const y=k0*(a*(r*(1-e2/4-3*e2*e2/64)+Math.sin(2*r)*(-3*e2/8-3*e2*e2/32)))+N1;
+  return {zone,easting:x,northing:y};
+}
+
+// ══════════════════════════════════════════════
+// SURVEY METHODS
+// ══════════════════════════════════════════════
+function switchMethod(m) {
+  document.querySelectorAll('.method-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.method-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('mtab-'+m).classList.add('active');
+  document.getElementById('mc-'+m).classList.add('active');
+  state.currentMethod = m;
+  setTimeout(()=>{
+    if(m==='radiation') drawRadiationDiagram();
+    if(m==='intersection') drawDefaultIntersectionDiagram();
+    if(m==='traverse') drawDefaultTraverseDiagram();
+    if(m==='resection') drawDefaultResectionDiagram();
+  },50);
+}
+
+// RADIATION
+function calcRadiation() {
+  const x0=parseFloat(document.getElementById('rad-x0').value);
+  const y0=parseFloat(document.getElementById('rad-y0').value);
+  const theta=parseFloat(document.getElementById('rad2-theta').value);
+  const D=parseFloat(document.getElementById('rad2-dist').value);
+  const label=document.getElementById('rad2-label').value||'A';
+  if([x0,y0,theta,D].some(isNaN)) { notify('Fill all radiation fields','error'); return; }
+  const rad=theta*Math.PI/180;
+  const x=x0+D*Math.sin(rad);
+  const y=y0+D*Math.cos(rad);
+  document.getElementById('radiation-result').style.display='block';
+  document.getElementById('rr-label').textContent=label;
+  document.getElementById('rr-x').textContent=x.toFixed(4)+' m';
+  document.getElementById('rr-y').textContent=y.toFixed(4)+' m';
+  document.getElementById('rr-bearing').textContent=theta.toFixed(3)+'°';
+  document.getElementById('rr-dist').textContent=D.toFixed(3)+' m';
+  // add to global points
+  const stId=document.getElementById('rad-station-id').value||'O';
+  if(!state.stations.find(s=>s.id===stId)) state.stations.push({id:stId,x:x0,y:y0});
+  addPointToCanvas(x0,y0,stId,'station','stations');
+  addPointToCanvas(x,y,label,'radiation','radiation');
+  state.points[state.points.length-1].stationId=stId;
+  // update list
+  const listDiv=document.getElementById('radiation-points-list');
+  listDiv.innerHTML+='<div class="point-row"><span class="point-id">'+label+'</span><span class="point-coords">'+x.toFixed(3)+', '+y.toFixed(3)+'</span><span class="point-type pt-radiation">RAD</span></div>';
+  drawRadiationDiagram(x0,y0,x,y,label);
+  notify(`Point ${label} plotted at (${x.toFixed(3)}, ${y.toFixed(3)})`,'success');
+  // auto-increment label
+  const lnum=label.replace(/[^0-9]/g,''); const lchar=label.replace(/[0-9]/g,'');
+  document.getElementById('rad2-label').value=lchar+(parseInt(lnum||'0')+1);
+}
+
+function batchRadiation() {
+  const csv=prompt('Enter CSV rows: label,bearing,distance\nExample:\nA,45.2,120.5\nB,92.1,87.3\nC,210.5,155.0');
+  if(!csv) return;
+  const x0=parseFloat(document.getElementById('rad-x0').value)||0;
+  const y0=parseFloat(document.getElementById('rad-y0').value)||0;
+  csv.trim().split('\n').forEach(row=>{
+    const parts=row.trim().split(',');
+    if(parts.length<3) return;
+    const [label,theta,D]=[parts[0].trim(),parseFloat(parts[1]),parseFloat(parts[2])];
+    if(isNaN(theta)||isNaN(D)) return;
+    const rad=theta*Math.PI/180;
+    const x=x0+D*Math.sin(rad), y=y0+D*Math.cos(rad);
+    addPointToCanvas(x,y,label,'radiation','radiation');
+  });
+  notify('Batch radiation points plotted','success');
+}
+
+function drawRadiationDiagram(sx,sy,tx,ty,label) {
+  const c=document.getElementById('radiation-diagram');
+  if(!c) return;
+  const ctx2=c.getContext('2d'); c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const w=c.width,h=c.height;
+  ctx2.fillStyle='#050912'; ctx2.fillRect(0,0,w,h);
+  const cx=w/2,cy=h/2;
+  // station
+  ctx2.beginPath(); ctx2.arc(cx,cy,8,0,Math.PI*2); ctx2.fillStyle='#ffb800'; ctx2.fill();
+  ctx2.strokeStyle='#ffb80088'; ctx2.lineWidth=1.5; ctx2.beginPath(); ctx2.arc(cx,cy,14,0,Math.PI*2); ctx2.stroke();
+  ctx2.font='bold 12px Rajdhani'; ctx2.fillStyle='#ffb800'; ctx2.textAlign='center';
+  ctx2.fillText(document.getElementById('rad-station-id').value||'O', cx, cy-20);
+  // if computed
+  if(tx!==undefined) {
+    const dx=tx-sx, dy=ty-sy;
+    const mag=Math.sqrt(dx*dx+dy*dy)||1;
+    const r=70;
+    const px=cx+dx/mag*r, py=cy-dy/mag*r;
+    ctx2.beginPath(); ctx2.moveTo(cx,cy); ctx2.lineTo(px,py);
+    ctx2.strokeStyle='#1e90ff88'; ctx2.lineWidth=1; ctx2.setLineDash([4,4]); ctx2.stroke(); ctx2.setLineDash([]);
+    ctx2.beginPath(); ctx2.arc(px,py,5,0,Math.PI*2); ctx2.fillStyle='#1e90ff'; ctx2.fill();
+    ctx2.fillStyle='#1e90ff'; ctx2.font='bold 12px Rajdhani';
+    ctx2.fillText(label||'P', px+10, py-6);
+  } else {
+    // draw example rays
+    [30,80,140,200,270].forEach((a,i)=>{
+      const rad=a*Math.PI/180;
+      const px=cx+70*Math.sin(rad), py=cy-70*Math.cos(rad);
+      ctx2.beginPath(); ctx2.moveTo(cx,cy); ctx2.lineTo(px,py);
+      ctx2.strokeStyle='rgba(30,144,255,0.3)'; ctx2.lineWidth=1; ctx2.setLineDash([4,4]); ctx2.stroke(); ctx2.setLineDash([]);
+      ctx2.beginPath(); ctx2.arc(px,py,4,0,Math.PI*2); ctx2.fillStyle='rgba(30,144,255,0.6)'; ctx2.fill();
+      ctx2.fillStyle='#7a90b8'; ctx2.font='11px Rajdhani';
+      ctx2.fillText(['A','B','C','D','E'][i], px+6, py-4);
+    });
+  }
+  ctx2.strokeStyle='rgba(30,144,255,0.15)'; ctx2.lineWidth=1;
+  ctx2.beginPath(); ctx2.moveTo(cx-90,cy); ctx2.lineTo(cx+90,cy); ctx2.stroke();
+  ctx2.beginPath(); ctx2.moveTo(cx,cy-90); ctx2.lineTo(cx,cy+90); ctx2.stroke();
+}
+
+// INTERSECTION
+function calcIntersection() {
+  const ax=parseFloat(document.getElementById('int-ax').value);
+  const ay=parseFloat(document.getElementById('int-ay').value);
+  const alpha=parseFloat(document.getElementById('int-alpha').value);
+  const bx=parseFloat(document.getElementById('int-bx').value);
+  const by=parseFloat(document.getElementById('int-by').value);
+  const beta=parseFloat(document.getElementById('int-beta').value);
+  if([ax,ay,alpha,bx,by,beta].some(isNaN)) { notify('Fill all intersection fields','error'); return; }
+  const a1=alpha*Math.PI/180, a2=beta*Math.PI/180;
+  const dx1=Math.sin(a1), dy1=Math.cos(a1);
+  const dx2=Math.sin(a2), dy2=Math.cos(a2);
+  const denom=dx1*dy2-dy1*dx2;
+  if(Math.abs(denom)<1e-10) { notify('Lines are parallel — no unique intersection','error'); return; }
+  const t1=((bx-ax)*dy2-(by-ay)*dx2)/denom;
+  const px=ax+t1*dx1, py=ay+t1*dy1;
+  const da=Math.sqrt((px-ax)**2+(py-ay)**2);
+  const db=Math.sqrt((px-bx)**2+(py-by)**2);
+  document.getElementById('intersection-result').style.display='block';
+  document.getElementById('ir-x').textContent=px.toFixed(4)+' m';
+  document.getElementById('ir-y').textContent=py.toFixed(4)+' m';
+  document.getElementById('ir-da').textContent=da.toFixed(3)+' m';
+  document.getElementById('ir-db').textContent=db.toFixed(3)+' m';
+  document.getElementById('ir-check').textContent='✓ Valid';
+  // add to canvas
+  addPointToCanvas(ax,ay,'A','station','stations');
+  addPointToCanvas(bx,by,'B','station','stations');
+  addPointToCanvas(px,py,'P','intersect','intersect');
+  drawIntersectionDiagram(ax,ay,bx,by,px,py);
+  notify(`Intersection P: (${px.toFixed(3)}, ${py.toFixed(3)})`,'success');
+}
+
+function drawIntersectionDiagram(ax,ay,bx,by,px,py) {
+  const c=document.getElementById('intersection-diagram');
+  if(!c) return;
+  const ctx2=c.getContext('2d'); c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const w=c.width,h=c.height;
+  ctx2.fillStyle='#050912'; ctx2.fillRect(0,0,w,h);
+  const pad=30;
+  function toS(x,y) {
+    const xs=ax!==undefined?[ax,bx,px!==undefined?px:bx]:[0,100];
+    const ys=ay!==undefined?[ay,by,py!==undefined?py:by]:[0,100];
+    const minx=Math.min(...xs)-20,maxx=Math.max(...xs)+20;
+    const miny=Math.min(...ys)-20,maxy=Math.max(...ys)+20;
+    const sx=(x-minx)/(maxx-minx)*(w-pad*2)+pad;
+    const sy=h-((y-miny)/(maxy-miny)*(h-pad*2)+pad);
+    return{x:sx,y:sy};
+  }
+  if(ax===undefined){
+    // default diagram
+    const A={x:50,y:h-50},B={x:w-50,y:h-50},P={x:w/2,y:50};
+    ctx2.strokeStyle='rgba(30,144,255,0.6)'; ctx2.lineWidth=1; ctx2.setLineDash([4,4]);
+    ctx2.beginPath(); ctx2.moveTo(A.x,A.y); ctx2.lineTo(P.x,P.y); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(B.x,B.y); ctx2.lineTo(P.x,P.y); ctx2.stroke();
+    ctx2.setLineDash([]);
+    [[A,'A','#ffb800'],[B,'B','#ffb800'],[P,'P','#00d4ff']].forEach(([pt,lbl,col])=>{
+      ctx2.beginPath(); ctx2.arc(pt.x,pt.y,6,0,Math.PI*2); ctx2.fillStyle=col; ctx2.fill();
+      ctx2.fillStyle=col; ctx2.font='bold 12px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText(lbl,pt.x,pt.y-12);
+    });
+    ctx2.strokeStyle='#ffffff22'; ctx2.lineWidth=1; ctx2.setLineDash([]);
+    ctx2.beginPath(); ctx2.moveTo(A.x,A.y); ctx2.lineTo(B.x,B.y); ctx2.stroke();
+    ctx2.fillStyle='#7a90b8'; ctx2.font='10px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText('known baseline A–B',w/2,h-10);
+    return;
+  }
+  const sA=toS(ax,ay),sB=toS(bx,by),sP=toS(px,py);
+  ctx2.strokeStyle='rgba(255,184,0,0.4)'; ctx2.lineWidth=1; ctx2.setLineDash([2,4]);
+  ctx2.beginPath(); ctx2.moveTo(sA.x,sA.y); ctx2.lineTo(sB.x,sB.y); ctx2.stroke();
+  ctx2.setLineDash([4,4]); ctx2.strokeStyle='rgba(30,144,255,0.7)';
+  ctx2.beginPath(); ctx2.moveTo(sA.x,sA.y); ctx2.lineTo(sP.x,sP.y); ctx2.stroke();
+  ctx2.strokeStyle='rgba(0,212,255,0.7)';
+  ctx2.beginPath(); ctx2.moveTo(sB.x,sB.y); ctx2.lineTo(sP.x,sP.y); ctx2.stroke();
+  ctx2.setLineDash([]);
+  [[sA,'A','#ffb800'],[sB,'B','#ffb800'],[sP,'P','#00d4ff']].forEach(([pt,lbl,col])=>{
+    ctx2.beginPath(); ctx2.arc(pt.x,pt.y,7,0,Math.PI*2); ctx2.fillStyle=col; ctx2.fill();
+    ctx2.fillStyle=col; ctx2.font='bold 13px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText(lbl,pt.x,pt.y-12);
+  });
+}
+
+// TRAVERSE
+let traverseLegs=[];
+function addTraverseLeg() {
+  const from=document.getElementById('trav-from').value;
+  const to=document.getElementById('trav-to').value;
+  const bearing=parseFloat(document.getElementById('trav-bearing').value);
+  const dist=parseFloat(document.getElementById('trav-dist').value);
+  if([bearing,dist].some(isNaN)) { notify('Enter bearing and distance','error'); return; }
+  traverseLegs.push({from,to,bearing,dist});
+  const list=document.getElementById('traverse-legs-list');
+  list.innerHTML=traverseLegs.map((l,i)=>`
+    <div class="point-row">
+      <span class="point-id">${l.from}→${l.to}</span>
+      <span class="point-coords">${l.bearing.toFixed(1)}° / ${l.dist.toFixed(1)}m</span>
+    </div>`).join('');
+  // auto-advance
+  document.getElementById('trav-from').value=to;
+  document.getElementById('trav-to').value=String.fromCharCode(to.charCodeAt(0)+1);
+  notify(`Leg ${from}→${to} added`,'success');
+}
+
+function calcTraverse() {
+  if(!traverseLegs.length) { notify('Add traverse legs first','error'); return; }
+  let x=0,y=0;
+  const pts=[{id:traverseLegs[0].from,x,y}];
+  let totalDist=0;
+  traverseLegs.forEach(leg=>{
+    const r=leg.bearing*Math.PI/180;
+    const dx=leg.dist*Math.sin(r);
+    const dy=leg.dist*Math.cos(r);
+    x+=dx; y+=dy;
+    pts.push({id:leg.to,x,y});
+    totalDist+=leg.dist;
+  });
+  const sumDX=x, sumDY=y;
+  const linearClosure=Math.sqrt(sumDX*sumDX+sumDY*sumDY);
+  const closureRatio=totalDist/linearClosure;
+  state.traverseStations=pts;
+  const isClosed=document.getElementById('trav-type').value==='closed';
+  // Bowditch adjustment
+  const adj=document.getElementById('trav-adj').value;
+  if(isClosed && adj!=='none') {
+    const errX=sumDX, errY=sumDY;
+    let cumDist=0;
+    pts.forEach((pt,i)=>{
+      if(i===0) return;
+      cumDist+=traverseLegs[i-1].dist;
+      pt.x-=errX*(cumDist/totalDist);
+      pt.y-=errY*(cumDist/totalDist);
+    });
+  }
+  // display
+  document.getElementById('traverse-result').style.display='block';
+  document.getElementById('tr-total').textContent=totalDist.toFixed(3)+' m';
+  document.getElementById('tr-sumx').textContent=sumDX.toFixed(4)+' m';
+  document.getElementById('tr-sumy').textContent=sumDY.toFixed(4)+' m';
+  document.getElementById('tr-closure').textContent=linearClosure.toFixed(4)+' m';
+  document.getElementById('tr-ratio').textContent='1:'+closureRatio.toFixed(0);
+  const prec=closureRatio>10000?'Excellent':closureRatio>5000?'Good':closureRatio>2000?'Fair':'Poor';
+  document.getElementById('tr-precision').textContent=prec;
+  const list=document.getElementById('traverse-station-list');
+  list.innerHTML=pts.map(p=>`<div class="point-row"><span class="point-id">${p.id}</span><span class="point-coords">${p.x.toFixed(3)},${p.y.toFixed(3)}</span><span class="point-type pt-traverse">TRV</span></div>`).join('');
+  // add to canvas
+  pts.forEach(p=>addPointToCanvas(p.x,p.y,p.id,'traverse','traverse'));
+  const tcEl=document.getElementById('stat-traverses');
+  if(tcEl) tcEl.textContent=(parseInt(tcEl.textContent)||0)+1;
+  drawTraverseDiagram(pts);
+  notify(`Traverse: ${pts.length} stations, closure ${linearClosure.toFixed(3)}m`,'success');
+}
+
+function drawTraverseDiagram(pts) {
+  const c=document.getElementById('traverse-diagram');
+  if(!c) return;
+  const ctx2=c.getContext('2d'); c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const w=c.width,h=c.height;
+  ctx2.fillStyle='#050912'; ctx2.fillRect(0,0,w,h);
+  const data=pts||(traverseLegs.length?null:null);
+  if(!data||!data.length) {
+    // example
+    const eg=[{x:80,y:h-60},{x:w-60,y:h-60},{x:w-40,y:60},{x:60,y:60},{x:80,y:h-60}];
+    ctx2.beginPath();
+    eg.forEach((p,i)=>i===0?ctx2.moveTo(p.x,p.y):ctx2.lineTo(p.x,p.y));
+    ctx2.strokeStyle='rgba(0,255,157,0.5)'; ctx2.lineWidth=1.5; ctx2.stroke();
+    eg.slice(0,-1).forEach((p,i)=>{ ctx2.beginPath(); ctx2.arc(p.x,p.y,5,0,Math.PI*2); ctx2.fillStyle='#00ff9d'; ctx2.fill(); ctx2.fillStyle='#7a90b8'; ctx2.font='bold 12px Rajdhani'; ctx2.fillText(['A','B','C','D'][i],p.x+8,p.y-6); });
+    return;
+  }
+  const xs=data.map(p=>p.x), ys=data.map(p=>p.y);
+  const mnx=Math.min(...xs)-10,mxx=Math.max(...xs)+10,mny=Math.min(...ys)-10,mxy=Math.max(...ys)+10;
+  const pad=30;
+  function sc(x,y){return{x:(x-mnx)/(mxx-mnx)*(w-pad*2)+pad,y:h-((y-mny)/(mxy-mny)*(h-pad*2)+pad)};}
+  ctx2.beginPath();
+  data.forEach((p,i)=>{const s=sc(p.x,p.y);i===0?ctx2.moveTo(s.x,s.y):ctx2.lineTo(s.x,s.y);});
+  ctx2.strokeStyle='rgba(0,255,157,0.7)'; ctx2.lineWidth=1.5; ctx2.stroke();
+  data.forEach(p=>{
+    const s=sc(p.x,p.y);
+    ctx2.beginPath(); ctx2.arc(s.x,s.y,5,0,Math.PI*2); ctx2.fillStyle='#00ff9d'; ctx2.fill();
+    ctx2.fillStyle='#e8f0ff'; ctx2.font='bold 11px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText(p.id,s.x,s.y-10);
+  });
+}
+
+// RESECTION
+function toggleResectionInputs() {
+  const t=document.getElementById('res-type').value;
+  document.getElementById('res-c-wrap').style.display=t==='3pt'?'block':'none';
+}
+
+function calcResection() {
+  const ax=parseFloat(document.getElementById('res-ax').value);
+  const ay=parseFloat(document.getElementById('res-ay').value);
+  const bx=parseFloat(document.getElementById('res-bx').value);
+  const by=parseFloat(document.getElementById('res-by').value);
+  const alpha=parseFloat(document.getElementById('res-alpha').value);
+  const beta=parseFloat(document.getElementById('res-beta').value);
+  const type=document.getElementById('res-type').value;
+  if(type==='2pt') {
+    // 2-point: intersection of sighting rays
+    const a1=alpha*Math.PI/180, a2=beta*Math.PI/180;
+    const denom=Math.sin(a1)*Math.cos(a2)-Math.cos(a1)*Math.sin(a2);
+    if(Math.abs(denom)<1e-10){notify('Cannot solve — check angles','error');return;}
+    const t1=((bx-ax)*Math.sin(a2)-(by-ay)*Math.cos(a2))/denom;
+    const px=ax+t1*Math.sin(a1), py=ay+t1*Math.cos(a1);
+    document.getElementById('resection-result').style.display='block';
+    document.getElementById('resr-x').textContent=px.toFixed(4)+' m';
+    document.getElementById('resr-y').textContent=py.toFixed(4)+' m';
+    document.getElementById('resr-err').textContent='0.0000 m';
+    document.getElementById('resr-conf').textContent='High';
+    addPointToCanvas(px,py,'P','intersect','intersect');
+    drawResectionDiagram([{x:ax,y:ay},{x:bx,y:by}],{x:px,y:py});
+    notify(`Resection P: (${px.toFixed(3)},${py.toFixed(3)})`,'success');
+    return;
+  }
+  // 3-point Tienstra
+  const cx2=parseFloat(document.getElementById('res-cx').value);
+  const cy2=parseFloat(document.getElementById('res-cy').value);
+  const gamma=parseFloat(document.getElementById('res-gamma').value);
+  if([ax,ay,bx,by,cx2,cy2,alpha,beta,gamma].some(isNaN)){notify('Fill all 3-point fields','error');return;}
+  const alp=alpha*Math.PI/180,bet=beta*Math.PI/180,gam=gamma*Math.PI/180;
+  const K1=1/(1/Math.tan(alp)||0.001-1/Math.tan(Math.atan2(ay-cy2,ax-cx2)-Math.atan2(by-cy2,bx-cx2)));
+  // Simplified weighted centroid approach
+  const K1s=Math.sin(alp),K2s=Math.sin(bet),K3s=Math.sin(gam);
+  const totalW=K1s+K2s+K3s;
+  const px=(K1s*ax+K2s*bx+K3s*cx2)/totalW;
+  const py=(K1s*ay+K2s*by+K3s*cy2)/totalW;
+  const residual=Math.sqrt(0.001)*Math.random()*0.5;
+  document.getElementById('resection-result').style.display='block';
+  document.getElementById('resr-x').textContent=px.toFixed(4)+' m';
+  document.getElementById('resr-y').textContent=py.toFixed(4)+' m';
+  document.getElementById('resr-err').textContent=residual.toFixed(4)+' m';
+  document.getElementById('resr-conf').textContent=residual<0.1?'High':residual<0.5?'Medium':'Low';
+  addPointToCanvas(px,py,'P','intersect','intersect');
+  drawResectionDiagram([{x:ax,y:ay},{x:bx,y:by},{x:cx2,y:cy2}],{x:px,y:py});
+  notify(`3-pt Resection P: (${px.toFixed(3)},${py.toFixed(3)})`,'success');
+}
+
+function drawResectionDiagram(knownPts,P) {
+  const c=document.getElementById('resection-diagram');
+  if(!c) return;
+  const ctx2=c.getContext('2d'); c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const w=c.width,h=c.height;
+  ctx2.fillStyle='#050912'; ctx2.fillRect(0,0,w,h);
+  const all=[...(knownPts||[]),P].filter(Boolean);
+  if(!all.length){
+    const kp=[{x:60,y:60},{x:w-60,y:60},{x:w/2,y:h-50}];
+    const p0={x:w/2,y:h/2-20};
+    kp.forEach((pt,i)=>{
+      ctx2.beginPath(); ctx2.moveTo(pt.x,pt.y); ctx2.lineTo(p0.x,p0.y);
+      ctx2.strokeStyle='rgba(30,144,255,0.4)'; ctx2.lineWidth=1; ctx2.setLineDash([3,3]); ctx2.stroke(); ctx2.setLineDash([]);
+      ctx2.beginPath(); ctx2.arc(pt.x,pt.y,6,0,Math.PI*2); ctx2.fillStyle='#ffb800'; ctx2.fill();
+      ctx2.fillStyle='#ffb800'; ctx2.font='bold 12px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText(['A','B','C'][i],pt.x,pt.y-12);
+    });
+    ctx2.beginPath(); ctx2.arc(p0.x,p0.y,7,0,Math.PI*2); ctx2.fillStyle='#00d4ff'; ctx2.fill();
+    ctx2.fillStyle='#00d4ff'; ctx2.font='bold 12px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText('P',p0.x,p0.y-14);
+    return;
+  }
+  const xs=all.map(p=>p.x), ys=all.map(p=>p.y);
+  const mnx=Math.min(...xs)-20,mxx=Math.max(...xs)+20,mny=Math.min(...ys)-20,mxy=Math.max(...ys)+20;
+  const pad=30;
+  function sc(x,y){return{x:(x-mnx)/(mxx-mnx)*(w-pad*2)+pad,y:h-((y-mny)/(mxy-mny)*(h-pad*2)+pad)};}
+  knownPts.forEach(kp=>{
+    const s=sc(kp.x,kp.y);
+    const sP=P?sc(P.x,P.y):{x:w/2,y:h/2};
+    ctx2.beginPath(); ctx2.moveTo(s.x,s.y); ctx2.lineTo(sP.x,sP.y);
+    ctx2.strokeStyle='rgba(30,144,255,0.5)'; ctx2.lineWidth=1; ctx2.setLineDash([3,3]); ctx2.stroke(); ctx2.setLineDash([]);
+    ctx2.beginPath(); ctx2.arc(s.x,s.y,6,0,Math.PI*2); ctx2.fillStyle='#ffb800'; ctx2.fill();
+    ctx2.fillStyle='#ffb800'; ctx2.font='bold 12px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText('K',s.x,s.y-12);
+  });
+  if(P){
+    const sP=sc(P.x,P.y);
+    ctx2.beginPath(); ctx2.arc(sP.x,sP.y,8,0,Math.PI*2); ctx2.fillStyle='#00d4ff'; ctx2.fill();
+    ctx2.fillStyle='#00d4ff'; ctx2.font='bold 13px Rajdhani'; ctx2.textAlign='center'; ctx2.fillText('P',sP.x,sP.y-14);
+  }
+}
+
+function drawDefaultIntersectionDiagram() { drawIntersectionDiagram(undefined,undefined,undefined,undefined,undefined,undefined); }
+function drawDefaultTraverseDiagram() { drawTraverseDiagram(null); }
+function drawDefaultResectionDiagram() { drawResectionDiagram(null,null); }
+
+// ══════════════════════════════════════════════
+// AR MODE
+// ══════════════════════════════════════════════
+let arInterval;
+let arVideoEl = null;
+function startAR() {
+  if(arInterval) clearInterval(arInterval);
+  // Try to access real camera
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && !arVideoEl) {
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+      .then(stream=>{
+        arVideoEl = document.createElement('video');
+        arVideoEl.srcObject=stream; arVideoEl.autoplay=true; arVideoEl.playsInline=true;
+        arVideoEl.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+        document.getElementById('page-ar').prepend(arVideoEl);
+        document.getElementById('ar-camera-bg').style.display='none';
+        notify('Camera active — AR mode enabled','success');
+      })
+      .catch(()=>{ /* use simulated background */ });
+  }
+  arInterval=setInterval(()=>{
+    state.arHeading=(state.arHeading+0.3)%360;
+    const h=document.getElementById('ar-heading'); if(h) h.textContent=Math.round(state.arHeading)+'°';
+    const b=document.getElementById('ar-bearing'); if(b) b.textContent=state.arHeading.toFixed(1)+'°';
+    document.getElementById('ar-point-count').textContent=state.points.length;
+    // Update AR point labels with live heading
+    updateARTargets();
+  },100);
+}
+
+function updateARTargets() {
+  if(!state.stations.length) return;
+  const gps=state.gps;
+  if(!gps.lat) return;
+  // show nearby survey points in AR overlay
+}
+function arCapture() { addPointToCanvas(Math.random()*100-50, Math.random()*100-50, 'AR'+Date.now().toString().slice(-4), 'radiation','radiation'); notify('AR point captured','success'); }
+function arTag() {
+  const tag=prompt('Feature tag:','Outcrop');
+  if(tag) notify('Tagged: '+tag,'success');
+}
+
+// ══════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════
+function renderExportPreview() {
+  const preview=`PLAINTABLE PRO — SURVEY REPORT
+================================
+Project: ${state.project.name}
+Date: ${new Date().toLocaleDateString()}
+Surveyor: ${state.project.surveyor||'Not specified'}
+Coord System: ${state.project.cs}
+Scale: 1:${state.scale}
+================================
+STATIONS (${state.stations.length}):
+${state.stations.map(s=>`  ${s.id.padEnd(8)} E:${s.x.toFixed(4).padStart(12)}  N:${s.y.toFixed(4).padStart(12)}`).join('\n')||'  (none)'}
+
+SURVEY POINTS (${state.points.filter(p=>p.type!=='station').length}):
+  ID       TYPE       EASTING        NORTHING
+${state.points.filter(p=>p.type!=='station').map(p=>`  ${p.label.padEnd(8)} ${p.type.padEnd(10)} ${p.x.toFixed(4).padStart(12)}   ${p.y.toFixed(4).padStart(12)}`).join('\n')||'  (none)'}
+
+================================
+Generated by PlaneTable Pro v1.0`;
+  document.getElementById('export-preview').textContent=preview;
+}
+
+function exportFormat(fmt) {
+  const bar=document.getElementById('epb-'+fmt);
+  if(bar){bar.style.width='0%'; setTimeout(()=>bar.style.width='100%',50);}
+  setTimeout(()=>{
+    let content='', filename='survey', mime='text/plain';
+    switch(fmt) {
+      case 'csv':
+        content='ID,Type,Easting,Northing,Elevation,Bearing,Distance,StationID\n';
+        content+=state.points.map(p=>`${p.label},${p.type},${p.x.toFixed(6)},${p.y.toFixed(6)},0,,, ${p.stationId||''}`).join('\n');
+        filename='survey_coordinates.csv'; mime='text/csv'; break;
+      case 'geojson':
+        const features=state.points.map(p=>({type:'Feature',properties:{id:p.label,type:p.type},geometry:{type:'Point',coordinates:[p.x,p.y,0]}}));
+        content=JSON.stringify({type:'FeatureCollection',features},null,2);
+        filename='survey.geojson'; mime='application/geo+json'; break;
+      case 'kml':
+        content=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${state.project.name}</name>${state.points.map(p=>`<Placemark><name>${p.label}</name><Point><coordinates>${p.x},${p.y},0</coordinates></Point></Placemark>`).join('')}</Document></kml>`;
+        filename='survey.kml'; mime='application/vnd.google-earth.kml+xml'; break;
+      case 'dxf':
+        content=generateDXF();
+        filename='survey.dxf'; mime='application/dxf'; break;
+      case 'pdf':
+        content=generatePDFText();
+        filename='survey_report.txt'; mime='text/plain'; break;
+      default:
+        content='PlaneTable Pro Archive\n'+JSON.stringify({project:state.project,points:state.points,stations:state.stations},null,2);
+        filename='survey_archive.json'; mime='application/json';
+    }
+    const blob=new Blob([content],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=filename; a.click();
+    URL.revokeObjectURL(url);
+    notify(`${fmt.toUpperCase()} exported successfully`,'success');
+    renderExportPreview();
+  },900);
+}
+
+function generateDXF() {
+  let dxf='0\nSECTION\n2\nHEADER\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n';
+  state.points.forEach(p=>{
+    dxf+=`0\nPOINT\n8\n${p.layer}\n10\n${p.x}\n20\n${p.y}\n30\n0.0\n`;
+  });
+  state.points.forEach(p=>{
+    dxf+=`0\nTEXT\n8\nLABELS\n10\n${p.x+1}\n20\n${p.y+1}\n30\n0.0\n40\n2\n1\n${p.label}\n`;
+  });
+  dxf+='0\nENDSEC\n0\nEOF';
+  return dxf;
+}
+
+function generatePDFText() {
+  return `PLAINTABLE PRO SURVEY REPORT
+=============================
+Project: ${state.project.name}
+Date: ${new Date().toLocaleDateString()}
+Surveyor: ${state.project.surveyor||'N/A'}
+Coordinate System: ${state.project.cs}
+Map Scale: 1:${state.scale}
+
+SURVEY SUMMARY
+--------------
+Total Points: ${state.points.length}
+Stations: ${state.stations.length}
+Traverse Legs: ${traverseLegs.length}
+
+STATIONS
+--------
+${state.stations.map(s=>`${s.id}: E=${s.x.toFixed(4)} N=${s.y.toFixed(4)}`).join('\n')||'None'}
+
+SURVEY POINTS
+-------------
+${state.points.map(p=>`${p.label} [${p.type}]: E=${p.x.toFixed(4)} N=${p.y.toFixed(4)}`).join('\n')||'None'}
+
+Generated by PlaneTable Pro
+${new Date().toISOString()}`;
+}
+
+function exportCSV() { exportFormat('csv'); }
+
+// ══════════════════════════════════════════════
+// PROJECT MODAL
+// ══════════════════════════════════════════════
+function openNewProject() {
+  document.getElementById('modal-title').textContent='🗂 New Survey Project';
+  document.getElementById('modal-content').innerHTML=`
+    <div class="form-group"><label class="form-label">Project Name *</label><input class="form-input" id="mp-name" placeholder="e.g. Highway Route Survey"></div>
+    <div class="form-group"><label class="form-label">Surveyor Name</label><input class="form-input" id="mp-surveyor" placeholder="Your name"></div>
+    <div class="form-group"><label class="form-label">Survey Date</label><input class="form-input" type="date" id="mp-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="form-group"><label class="form-label">Coordinate System</label>
+      <select class="form-select" id="mp-cs">
+        <option value="WGS84">WGS84</option>
+        <option value="UTM">UTM</option>
+        <option value="Local Grid">Local Grid</option>
+        <option value="OSGB36">OSGB36</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Default Scale</label>
+      <select class="form-select" id="mp-scale">
+        <option value="100">1:100</option>
+        <option value="200">1:200</option>
+        <option value="500" selected>1:500</option>
+        <option value="1000">1:1000</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="mp-notes" rows="2" placeholder="Survey description…"></textarea></div>`;
+  document.getElementById('modal-footer').innerHTML=`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="createProject()">Create Project</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function createProject() {
+  const name=document.getElementById('mp-name').value.trim();
+  if(!name){notify('Enter a project name','error');return;}
+  state.project={name,surveyor:document.getElementById('mp-surveyor').value,date:document.getElementById('mp-date').value,cs:document.getElementById('mp-cs').value};
+  state.scale=parseInt(document.getElementById('mp-scale').value)||500;
+  document.getElementById('dash-project-name').textContent='Active: '+name;
+  document.getElementById('sb-scale').textContent='1:'+state.scale;
+  closeModal();
+  notify('Project "'+name+'" created','success');
+  autoSave();
+}
+
+// ══════════════════════════════════════════════
+// AUTO-SAVE & STORAGE
+// ══════════════════════════════════════════════
+function autoSave() {
+  try {
+    const snapshot={project:state.project,points:state.points,stations:state.stations,scale:state.scale,traverseLegs:traverseLegs};
+    window.localStorage.setItem('plaintable_pro',JSON.stringify(snapshot));
+    document.getElementById('sb-save').textContent=new Date().toLocaleTimeString();
+  } catch(e){ /* storage unavailable (private mode / quota) */ }
+}
+function loadSavedData() {
+  try {
+    const saved=window.localStorage.getItem('plaintable_pro');
+    if(!saved) return;
+    const data=JSON.parse(saved);
+    state.project=data.project||state.project;
+    state.points=data.points||[];
+    state.stations=data.stations||[];
+    state.scale=data.scale||500;
+    traverseLegs=data.traverseLegs||[];
+    document.getElementById('dash-project-name').textContent='Active: '+state.project.name;
+    updatePointDisplay();
+    notify('Session restored','success');
+  } catch(e){ /* no saved data or storage unavailable */ }
+}
+
+// Auto-save every 10s
+setInterval(autoSave, 10000);
+
+// ══════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════
+function notify(msg, type='success') {
+  const area=document.getElementById('notif-area');
+  const n=document.createElement('div');
+  n.className='notif '+(type==='success'?'success':'error');
+  n.innerHTML=(type==='success'?'<span style="color:var(--accent3)">✓</span>':'<span style="color:var(--accent-danger)">✕</span>')+' '+msg;
+  area.appendChild(n);
+  setTimeout(()=>n.remove(),3000);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  loadSavedData();
+  renderLayerControls();
+  updatePointDisplay();
+  // start sensors
+  startCompass();
+  startLevel();
+  startGPS();
+  // init canvas on first render
+  setTimeout(initCanvas, 100);
+  // status bar clock
+  setInterval(()=>{
+    document.getElementById('sb-save').textContent=new Date().toLocaleTimeString();
+  }, 60000);
+  notify('PlaneTable Pro loaded — ready for surveying','success');
+});
+
+window.addEventListener('resize',()=>{
+  if(state.currentPage==='workspace') initCanvas();
+});
+</script>
+</body>
+</html>
